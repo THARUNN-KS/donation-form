@@ -1,38 +1,200 @@
+/* App.css */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 .App {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.donation-container {
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  max-width: 500px;
+  width: 100%;
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.donation-container h1 {
+  color: #333;
+  margin-bottom: 10px;
+  font-size: 2.5em;
+  font-weight: 600;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.donation-container > p {
+  color: #666;
+  margin-bottom: 30px;
+  font-size: 1.1em;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+.donation-form {
+  text-align: left;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 15px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group input:hover {
+  border-color: #c1c8cd;
+}
+
+.error-message {
+  background: #fee;
+  color: #c33;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  border: 1px solid #fcc;
+  font-size: 14px;
+  text-align: center;
+}
+
+.quick-amounts {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.quick-amounts p {
+  margin-bottom: 12px;
+  color: #666;
+  font-size: 14px;
+}
+
+.quick-amount-btn {
+  background: #f8f9fa;
+  border: 2px solid #e1e5e9;
+  border-radius: 6px;
+  padding: 8px 16px;
+  margin: 0 5px 8px 0;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: all 0.2s ease;
+}
+
+.quick-amount-btn:hover {
+  background: #667eea;
   color: white;
+  border-color: #667eea;
+  transform: translateY(-1px);
 }
 
-.App-link {
-  color: #61dafb;
+.donate-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 18px;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.donate-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+}
+
+.donate-btn:active {
+  transform: translateY(0);
+}
+
+.donate-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.info-section {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e1e5e9;
+  text-align: center;
+}
+
+.info-section p {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .App {
+    padding: 10px;
   }
-  to {
-    transform: rotate(360deg);
+  
+  .donation-container {
+    padding: 25px 20px;
   }
+  
+  .donation-container h1 {
+    font-size: 2em;
+  }
+  
+  .quick-amount-btn {
+    margin: 0 3px 8px 0;
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}
+
+/* Loading animation */
+.donate-btn:disabled::after {
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-left: 8px;
+  border: 2px solid transparent;
+  border-top: 2px solid #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
