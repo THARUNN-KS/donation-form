@@ -85,15 +85,17 @@ const App = () => {
   // Initialize Razorpay payment
   const initiateRazorpayPayment = async () => {
     try {
-      // Create order on backend
-      const response = await fetch('http://localhost:5001/api/create-order', {
+      // Create order on backend - UPDATED FOR VERCEL (relative path)
+      const response = await fetch('/api/create-order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           amount: formData.amount,
-          name: formData.name
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone
         }),
       });
 
@@ -106,13 +108,13 @@ const App = () => {
 
       // Razorpay payment options
       const options = {
-        key: 'rzp_test_4nEyceM4GUQmPk', // This should match your backend key
+        key: 'rzp_test_4nEyceM4GUQmPk',
         amount: orderData.amount,
         currency: orderData.currency,
         order_id: orderData.id,
         name: 'Donation Campaign',
         description: 'Thank you for your generous donation!',
-        image: '/logo192.png', // Optional: Add your logo
+        image: '/logo192.png',
         handler: function (response) {
           handlePaymentSuccess(response);
         },
@@ -146,8 +148,8 @@ const App = () => {
     try {
       console.log('Payment successful:', response);
       
-      // Optional: Verify payment on backend
-      await fetch('http://localhost:5001/api/verify-payment', {
+      // Optional: Verify payment on backend - UPDATED FOR VERCEL
+      await fetch('/api/verify-payment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -159,7 +161,7 @@ const App = () => {
         }),
       });
 
-      alert(`🎉 Thank you ${formData.name}! Your donation of ₹${formData.amount} has been received successfully!`);
+      alert(`Thank you ${formData.name}! Your donation of ₹${formData.amount} has been received successfully!`);
       
       // Reset form
       setFormData({
@@ -180,7 +182,7 @@ const App = () => {
   return (
     <div className="App">
       <div className="donation-container">
-        <h1>🤝 Donate to Our Cause</h1>
+        <h1>Donate to Our Cause</h1>
         <p>Your contribution makes a difference in someone's life!</p>
         
         <form onSubmit={handleFormSubmit} className="donation-form">
@@ -257,13 +259,13 @@ const App = () => {
             className="donate-btn"
             disabled={loading}
           >
-            {loading ? 'Processing...' : `💳 Donate ₹${formData.amount || '0'}`}
+            {loading ? 'Processing...' : `Donate ₹${formData.amount || '0'}`}
           </button>
         </form>
 
         <div className="info-section">
-          <p>🔒 Secure payment powered by Razorpay</p>
-          <p>✅ All donations are processed securely</p>
+          <p>Secure payment powered by Razorpay</p>
+          <p>All donations are processed securely</p>
         </div>
       </div>
     </div>
