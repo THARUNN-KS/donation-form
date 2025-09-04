@@ -19,15 +19,16 @@ export default async function handler(req, res) {
   try {
     console.log('=== API CALLED ===');
     console.log('Request body:', req.body);
-    console.log('Environment check:', {
-      hasKeyId: !!process.env.RAZORPAY_KEY_ID,
-      hasSecretKey: !!process.env.RAZORPAY_SECRET_KEY
-    });
 
     const { amount, name, email, phone, frequency } = req.body;
     
     if (!amount || !name) {
       return res.status(400).json({ error: 'Amount and name are required' });
+    }
+
+    // Email is required for monthly donations
+    if (frequency === 'Monthly' && !email) {
+      return res.status(400).json({ error: 'Email is required for monthly donations' });
     }
 
     if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_SECRET_KEY) {
@@ -39,56 +40,46 @@ export default async function handler(req, res) {
       key_secret: process.env.RAZORPAY_SECRET_KEY
     });
 
-    console.log('Frequency:', frequency);
+    console.log('Processing payment with frequency:', frequency);
 
-    if (frequency === 'Monthly') {
-      console.log('Processing monthly subscription...');
-      
-      if (!email) {
-        return res.status(400).json({ error: 'Email is required for monthly subscriptions' });
+    // Handle both one-time and monthly as orders (monthly marked for future processing)
+    const isMonthly = frequency === 'Monthly';
+    
+    const options = {
+      amount: Math.round(parseFloat(amount) * 100),
+      currency: 'INR',
+      receipt: `${isMonthly ? 'monthly' : 'onetime'}_${Date.now()}`,
+      payment_capture: 1,
+      notes: {
+        donation_type: isMonthly ? 'monthly_recurring' : 'one_time',
+        donor_name: name,
+        donor_email: email || '',
+        donor_phone: phone || '',
+        recurring_setup_needed: isMonthly ? 'true' : 'false',
+        frequency: frequency || 'One-time'
       }
+    };
 
-      // For now, just return a test response for subscriptions
-      res.status(200).json({
-        type: 'subscription',
-        subscription_id: 'test_sub_123',
-        customer_id: 'test_cust_123',
-        plan_id: `monthly_${amount}`,
-        amount: parseInt(amount) * 100,
-        currency: 'INR',
-        message: 'Subscription flow - testing'
-      });
-
-    } else {
-      console.log('Processing one-time payment...');
-      
-      // Handle one-time payment
-      const options = {
-        amount: Math.round(parseFloat(amount) * 100),
-        currency: 'INR',
-        receipt: `donation_${Date.now()}`,
-        payment_capture: 1
-      };
-
-      const order = await razorpay.orders.create(options);
-      
-      res.status(200).json({
-        type: 'order',
-        id: order.id,
-        amount: order.amount,
-        currency: order.currency
-      });
-    }
+    console.log('Creating order with options:', options);
+    const order = await razorpay.orders.create(options);
+    console.log('Order created successfully:', order.id);
+    
+    res.status(200).json({
+      type: 'order',
+      id: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      is_monthly: isMonthly
+    });
     
   } catch (error) {
-    console.error('=== ERROR ===');
+    console.error('=== API ERROR ===');
     console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
     
     res.status(500).json({ 
-      error: 'Server error',
-      details: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: 'Failed to process payment',
+      details: error.message 
     });
   }
 }

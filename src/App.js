@@ -142,93 +142,55 @@ const App = () => {
       }
 
       const paymentData = await response.json();
+      console.log('Payment data received:', paymentData);
 
-      if (paymentData.type === 'subscription') {
-        // Handle subscription
-        const options = {
-          key: 'rzp_test_4nEyceM4GUQmPk',
-          subscription_id: paymentData.subscription_id,
-          name: 'Monthly Donation',
-          description: `Monthly donation of ₹${formData.amount}`,
-          handler: function (response) {
-            handleSubscriptionSuccess(response);
-          },
-          prefill: {
-            name: formData.name,
-            email: formData.email,
-            contact: formData.phone,
-          },
-          theme: {
-            color: "#3B82F6",
-          },
-          modal: {
-            ondismiss: function() {
-              setLoading(false);
-            }
+      // All payments are now handled as orders (including monthly marked as recurring)
+      const isMonthly = formData.frequency === 'Monthly';
+      
+      const options = {
+        key: 'rzp_test_4nEyceM4GUQmPk',
+        amount: paymentData.amount,
+        currency: paymentData.currency,
+        order_id: paymentData.id,
+        name: isMonthly ? 'Monthly Donation Setup' : 'One-time Donation',
+        description: isMonthly 
+          ? `Setting up monthly donation of ₹${formData.amount}` 
+          : 'Thank you for your generous donation!',
+        handler: function (response) {
+          handlePaymentSuccess(response, isMonthly);
+        },
+        prefill: {
+          name: formData.name,
+          email: formData.email,
+          contact: formData.phone,
+        },
+        theme: {
+          color: "#3B82F6",
+        },
+        modal: {
+          ondismiss: function() {
+            setLoading(false);
           }
-        };
+        }
+      };
 
-        const razorpay = new window.Razorpay(options);
-        razorpay.open();
-      } else {
-        // Handle one-time payment (existing code)
-        const options = {
-          key: 'rzp_test_4nEyceM4GUQmPk',
-          amount: paymentData.amount,
-          currency: paymentData.currency,
-          order_id: paymentData.id,
-          name: 'One-time Donation',
-          description: 'Thank you for your generous donation!',
-          handler: function (response) {
-            handlePaymentSuccess(response);
-          },
-          prefill: {
-            name: formData.name,
-            email: formData.email,
-            contact: formData.phone,
-          },
-          theme: {
-            color: "#3B82F6",
-          },
-          modal: {
-            ondismiss: function() {
-              setLoading(false);
-            }
-          }
-        };
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
 
-        const razorpay = new window.Razorpay(options);
-        razorpay.open();
-      }
     } catch (error) {
       throw error;
     }
   };
 
-  // Handle successful subscription
-  const handleSubscriptionSuccess = (response) => {
-    console.log('Subscription successful:', response);
-    alert(`Thank you ${formData.name}! Your monthly subscription of ₹${formData.amount} has been set up successfully!`);
-    
-    // Reset form
-    setFormData({
-      amount: '',
-      frequency: 'One-time',
-      name: '',
-      email: '',
-      phone: '',
-      address: '',
-      city: '',
-      country: ''
-    });
-    setCurrentStep(1);
-    setLoading(false);
-  };
-
-  // Handle successful one-time payment
-  const handlePaymentSuccess = (response) => {
+  // Handle successful payment (both one-time and monthly)
+  const handlePaymentSuccess = (response, isMonthly) => {
     console.log('Payment successful:', response);
-    alert(`Thank you ${formData.name}! Your donation of ₹${formData.amount} has been received successfully!`);
+    
+    const message = isMonthly 
+      ? `🎉 Thank you ${formData.name}! Your monthly donation of ₹${formData.amount} has been set up successfully! We'll process your recurring donations automatically each month.`
+      : `🎉 Thank you ${formData.name}! Your donation of ₹${formData.amount} has been received successfully!`;
+    
+    alert(message);
     
     // Reset form
     setFormData({
@@ -417,6 +379,11 @@ const App = () => {
           <span className="label">Email:</span>
           <span className="value">{formData.email}</span>
         </div>
+        {formData.frequency === 'Monthly' && (
+          <div style={{marginTop: '16px', padding: '12px', backgroundColor: '#EFF6FF', borderRadius: '8px', fontSize: '14px', color: '#1E40AF'}}>
+            <strong>Monthly Donation:</strong> Your monthly donation will be processed automatically each month. You can cancel anytime.
+          </div>
+        )}
       </div>
     </div>
   );
