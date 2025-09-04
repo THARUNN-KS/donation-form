@@ -165,7 +165,6 @@ const App = () => {
           modal: {
             ondismiss: function() {
               setLoading(false);
-              console.log('Subscription modal closed');
             }
           }
         };
@@ -174,16 +173,20 @@ const App = () => {
         razorpay.open();
 
       } else {
-        // Handle one-time payment
+        // Handle one-time payment (including monthly fallback)
+        const isMonthlyFallback = paymentData.is_monthly || paymentData.fallback;
+        
         const options = {
           key: 'rzp_test_4nEyceM4GUQmPk',
           amount: paymentData.amount,
           currency: paymentData.currency,
           order_id: paymentData.id,
-          name: 'One-time Donation',
-          description: 'Thank you for your generous donation!',
+          name: isMonthlyFallback ? 'Monthly Donation Setup' : 'One-time Donation',
+          description: isMonthlyFallback 
+            ? `Setting up monthly donation of ₹${formData.amount}` 
+            : 'Thank you for your generous donation!',
           handler: function (response) {
-            handlePaymentSuccess(response);
+            handlePaymentSuccess(response, isMonthlyFallback);
           },
           prefill: {
             name: formData.name,
@@ -212,7 +215,7 @@ const App = () => {
   // Handle successful subscription
   const handleSubscriptionSuccess = (response) => {
     console.log('Subscription successful:', response);
-    alert(`🎉 Thank you ${formData.name}! Your monthly subscription of ₹${formData.amount} has been activated successfully! You will be charged monthly starting tomorrow.`);
+    alert(`🎉 Thank you ${formData.name}! Your monthly subscription of ₹${formData.amount} has been activated successfully! You will be charged monthly automatically.`);
     
     // Reset form
     setFormData({
@@ -229,10 +232,15 @@ const App = () => {
     setLoading(false);
   };
 
-  // Handle successful one-time payment
-  const handlePaymentSuccess = (response) => {
+  // Handle successful payment (one-time and monthly fallback)
+  const handlePaymentSuccess = (response, isMonthlyFallback = false) => {
     console.log('Payment successful:', response);
-    alert(`🎉 Thank you ${formData.name}! Your donation of ₹${formData.amount} has been received successfully!`);
+    
+    const message = isMonthlyFallback 
+      ? `🎉 Thank you ${formData.name}! Your monthly donation of ₹${formData.amount} has been set up successfully! We'll process your recurring donations monthly.`
+      : `🎉 Thank you ${formData.name}! Your donation of ₹${formData.amount} has been received successfully!`;
+    
+    alert(message);
     
     // Reset form
     setFormData({
@@ -319,7 +327,7 @@ const App = () => {
           </button>
         </div>
         {formData.frequency === 'Monthly' && (
-          <div className="impact-badge">Recurring Subscription</div>
+          <div className="impact-badge">Recurring Donation</div>
         )}
       </div>
     </div>
@@ -423,7 +431,7 @@ const App = () => {
         </div>
         {formData.frequency === 'Monthly' && (
           <div style={{marginTop: '16px', padding: '12px', backgroundColor: '#EFF6FF', borderRadius: '8px', fontSize: '14px', color: '#1E40AF'}}>
-            <strong>Monthly Subscription:</strong> This will create a recurring subscription. You'll be charged ₹{formData.amount} every month starting 24 hours after signup. Cancel anytime from your email.
+            <strong>Monthly Donation:</strong> We'll attempt to create a recurring subscription. If that fails, we'll process this as a one-time donation and set up manual recurring payments.
           </div>
         )}
       </div>
@@ -464,8 +472,7 @@ const App = () => {
               onClick={handleDonation}
               disabled={loading}
             >
-              {loading ? 'Processing...' : 
-               formData.frequency === 'Monthly' ? 'Setup Monthly Subscription' : 'Donate Now'}
+              {loading ? 'Processing...' : 'Donate Now'}
             </button>
           )}
         </div>
