@@ -16,58 +16,92 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log('=== API Function Called ===');
-    console.log('Request body:', req.body);
-    console.log('Environment variables check:', {
-      hasKeyId: !!process.env.RAZORPAY_KEY_ID,
-      hasSecretKey: !!process.env.RAZORPAY_SECRET_KEY,
-      keyIdLength: process.env.RAZORPAY_KEY_ID?.length,
-      secretKeyLength: process.env.RAZORPAY_SECRET_KEY?.length
-    });
-
-    const { amount, name } = req.body;
+    const { amount, name, email, phone, frequency } = req.body;
     
     if (!amount || !name) {
-      console.log('Missing required fields:', { amount, name });
       return res.status(400).json({ error: 'Amount and name are required' });
     }
 
-    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_SECRET_KEY) {
-      console.log('Missing Razorpay credentials');
-      return res.status(500).json({ error: 'Razorpay credentials not configured' });
-    }
-
-    console.log('Creating Razorpay instance...');
     const razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
       key_secret: process.env.RAZORPAY_SECRET_KEY
     });
 
-    const options = {
-      amount: Math.round(parseFloat(amount) * 100),
-      currency: 'INR',
-      receipt: `donation_${Date.now()}`,
-      payment_capture: 1
-    };
+    if (frequency === 'Monthly') {
+      // Handle monthly subscription
+      if (!email) {
+        return res.status(400).json({ error: 'Email is required for monthly subscriptions' });
+      }
 
-    console.log('Creating order with options:', options);
-    const order = await razorpay.orders.create(options);
-    console.log('Order created successfully:', order.id);
-    
-    res.status(200).json({
-      id: order.id,
-      amount: order.amount,
-      currency: order.currency
-    });
+      // Check if plan exists, create if not
+      const planId = `monthly_${amount}`;
+      let plan;
+      
+      try {
+        plan = await razorpay.plans.fetch(planId);
+      } catch (planError) {
+        // Plan doesn't exist, create it
+        plan = await razorpay.plans.create({
+          id: planId,
+          name: `Monthly Donation ₹${amount}`,
+          amount: parseInt(amount) * 100, // Amount in paisa
+          currency: 'INR',
+          interval: 1,
+          period: 'monthly'
+        });
+      }
+
+      // Create customer
+      const customer = await razorpay.customers.create({
+        name: name,
+        email: email,
+        contact: phone || ''
+      });
+
+      // Create subscription
+      const subscription = await razorpay.subscriptions.create({
+        plan_id: planId,
+        customer_notify: 1,
+        total_count: 60, // 5 years
+        notes: {
+          donor_name: name,
+          donor_email: email,
+          donation_type: 'monthly'
+        }
+      });
+
+      res.status(200).json({
+        type: 'subscription',
+        subscription_id: subscription.id,
+        customer_id: customer.id,
+        plan_id: planId,
+        amount: parseInt(amount) * 100,
+        currency: 'INR'
+      });
+
+    } else {
+      // Handle one-time payment
+      const options = {
+        amount: Math.round(parseFloat(amount) * 100),
+        currency: 'INR',
+        receipt: `donation_${Date.now()}`,
+        payment_capture: 1
+      };
+
+      const order = await razorpay.orders.create(options);
+      
+      res.status(200).json({
+        type: 'order',
+        id: order.id,
+        amount: order.amount,
+        currency: order.currency
+      });
+    }
     
   } catch (error) {
-    console.error('=== ERROR DETAILS ===');
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    console.error('Error details:', error);
-    
+    console.error('Error:', error);
     res.status(500).json({ 
-      error: 'Failed to create order',
+      error: 'Failed to process request',
       details: error.message 
     });
   }

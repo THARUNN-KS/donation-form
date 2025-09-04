@@ -39,32 +39,38 @@ const App = () => {
   };
 
   // Validate current step
-  const validateStep = (step) => {
-    switch (step) {
-      case 1:
-        if (!formData.amount || parseFloat(formData.amount) <= 0) {
-          setError('Please select or enter a donation amount');
-          return false;
-        }
-        if (parseFloat(formData.amount) < 100) {
-          setError('Minimum donation amount is ₹100');
-          return false;
-        }
-        return true;
-      case 2:
-        if (!formData.name.trim()) {
-          setError('Full Name is required');
-          return false;
-        }
-        if (!formData.email.trim()) {
-          setError('Email Address is required');
-          return false;
-        }
-        return true;
-      default:
-        return true;
-    }
-  };
+  // Update validateStep function in App.js
+const validateStep = (step) => {
+  switch (step) {
+    case 1:
+      if (!formData.amount || parseFloat(formData.amount) <= 0) {
+        setError('Please select or enter a donation amount');
+        return false;
+      }
+      if (parseFloat(formData.amount) < 100) {
+        setError('Minimum donation amount is ₹100');
+        return false;
+      }
+      return true;
+    case 2:
+      if (!formData.name.trim()) {
+        setError('Full Name is required');
+        return false;
+      }
+      if (!formData.email.trim()) {
+        setError('Email Address is required');
+        return false;
+      }
+      // Email is required for monthly subscriptions
+      if (formData.frequency === 'Monthly' && !formData.email.trim()) {
+        setError('Email is required for monthly donations');
+        return false;
+      }
+      return true;
+    default:
+      return true;
+  }
+};
 
   // Go to next step
   const nextStep = () => {
@@ -115,34 +121,65 @@ const App = () => {
   };
 
   // Initialize Razorpay payment
-  const initiateRazorpayPayment = async () => {
-    try {
-      const response = await fetch('/api/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: formData.amount,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone
-        }),
-      });
+  // Update the initiateRazorpayPayment function
+const initiateRazorpayPayment = async () => {
+  try {
+    const response = await fetch('/api/create-order', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        amount: formData.amount,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        frequency: formData.frequency
+      }),
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create order');
-      }
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to create payment');
+    }
 
-      const orderData = await response.json();
+    const paymentData = await response.json();
 
+    if (paymentData.type === 'subscription') {
+      // Handle subscription
       const options = {
         key: 'rzp_test_4nEyceM4GUQmPk',
-        amount: orderData.amount,
-        currency: orderData.currency,
-        order_id: orderData.id,
-        name: 'Donation Campaign',
+        subscription_id: paymentData.subscription_id,
+        name: 'Monthly Donation',
+        description: `Monthly donation of ₹${formData.amount}`,
+        handler: function (response) {
+          handleSubscriptionSuccess(response);
+        },
+        prefill: {
+          name: formData.name,
+          email: formData.email,
+          contact: formData.phone,
+        },
+        theme: {
+          color: "#3B82F6",
+        },
+        modal: {
+          ondismiss: function() {
+            setLoading(false);
+          }
+        }
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+    } else {
+      // Handle one-time payment (existing code)
+      const options = {
+        key: 'rzp_test_4nEyceM4GUQmPk',
+        amount: paymentData.amount,
+        currency: paymentData.currency,
+        order_id: paymentData.id,
+        name: 'One-time Donation',
         description: 'Thank you for your generous donation!',
         handler: function (response) {
           handlePaymentSuccess(response);
@@ -164,29 +201,31 @@ const App = () => {
 
       const razorpay = new window.Razorpay(options);
       razorpay.open();
-    } catch (error) {
-      throw error;
     }
-  };
+  } catch (error) {
+    throw error;
+  }
+};
 
-  // Handle successful payment
-  const handlePaymentSuccess = (response) => {
-    alert(`🎉 Thank you ${formData.name}! Your donation of ₹${formData.amount} has been received successfully!`);
-    
-    // Reset form
-    setFormData({
-      amount: '',
-      frequency: 'One-time',
-      name: '',
-      email: '',
-      phone: '',
-      address: '',
-      city: '',
-      country: ''
-    });
-    setCurrentStep(1);
-    setLoading(false);
-  };
+// Add new function for subscription success
+const handleSubscriptionSuccess = (response) => {
+  console.log('Subscription successful:', response);
+  alert(`🎉 Thank you ${formData.name}! Your monthly subscription of ₹${formData.amount} has been set up successfully!`);
+  
+  // Reset form
+  setFormData({
+    amount: '',
+    frequency: 'One-time',
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    country: ''
+  });
+  setCurrentStep(1);
+  setLoading(false);
+};
 
   // Render step indicator
   const renderStepIndicator = () => (
