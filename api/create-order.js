@@ -1,6 +1,7 @@
 const Razorpay = require('razorpay');
 
 export default async function handler(req, res) {
+  // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -16,13 +17,21 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log('=== API CALLED ===');
+    console.log('Request body:', req.body);
+    console.log('Environment check:', {
+      hasKeyId: !!process.env.RAZORPAY_KEY_ID,
+      hasSecretKey: !!process.env.RAZORPAY_SECRET_KEY
+    });
+
     const { amount, name, email, phone, frequency } = req.body;
-    
-    console.log('=== Payment Request ===');
-    console.log('Request data:', { amount, name, email, frequency });
     
     if (!amount || !name) {
       return res.status(400).json({ error: 'Amount and name are required' });
+    }
+
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_SECRET_KEY) {
+      return res.status(500).json({ error: 'Razorpay credentials not configured' });
     }
 
     const razorpay = new Razorpay({
@@ -30,75 +39,24 @@ export default async function handler(req, res) {
       key_secret: process.env.RAZORPAY_SECRET_KEY
     });
 
+    console.log('Frequency:', frequency);
+
     if (frequency === 'Monthly') {
       console.log('Processing monthly subscription...');
       
-      // Email is required for subscriptions
       if (!email) {
         return res.status(400).json({ error: 'Email is required for monthly subscriptions' });
       }
 
-      // Create plan ID based on amount
-      const planId = `monthly_${amount}`;
-      let plan;
-      
-      try {
-        // Try to fetch existing plan
-        plan = await razorpay.plans.fetch(planId);
-        console.log('Using existing plan:', planId);
-      } catch (planError) {
-        console.log('Plan not found, creating new plan:', planId);
-        
-        // Plan doesn't exist, create it
-        plan = await razorpay.plans.create({
-          id: planId,
-          name: `Monthly Donation ₹${amount}`,
-          amount: parseInt(amount) * 100, // Amount in paisa
-          currency: 'INR',
-          interval: 1,
-          period: 'monthly',
-          notes: {
-            created_for: 'donation_form'
-          }
-        });
-        console.log('Created new plan:', plan.id);
-      }
-
-      // Create customer
-      const customer = await razorpay.customers.create({
-        name: name,
-        email: email,
-        contact: phone || '',
-        notes: {
-          donation_amount: amount,
-          created_via: 'donation_form'
-        }
-      });
-      console.log('Created customer:', customer.id);
-
-      // Create subscription
-      const subscription = await razorpay.subscriptions.create({
-        plan_id: planId,
-        customer_notify: 1,
-        total_count: 60, // 5 years of monthly donations
-        addons: [],
-        notes: {
-          donor_name: name,
-          donor_email: email,
-          donation_type: 'monthly',
-          amount: amount
-        }
-      });
-
-      console.log('Created subscription:', subscription.id);
-
+      // For now, just return a test response for subscriptions
       res.status(200).json({
         type: 'subscription',
-        subscription_id: subscription.id,
-        customer_id: customer.id,
-        plan_id: planId,
+        subscription_id: 'test_sub_123',
+        customer_id: 'test_cust_123',
+        plan_id: `monthly_${amount}`,
         amount: parseInt(amount) * 100,
-        currency: 'INR'
+        currency: 'INR',
+        message: 'Subscription flow - testing'
       });
 
     } else {
@@ -109,16 +67,10 @@ export default async function handler(req, res) {
         amount: Math.round(parseFloat(amount) * 100),
         currency: 'INR',
         receipt: `donation_${Date.now()}`,
-        payment_capture: 1,
-        notes: {
-          donor_name: name,
-          donor_email: email || '',
-          donation_type: 'one_time'
-        }
+        payment_capture: 1
       };
 
       const order = await razorpay.orders.create(options);
-      console.log('Created order:', order.id);
       
       res.status(200).json({
         type: 'order',
@@ -130,13 +82,13 @@ export default async function handler(req, res) {
     
   } catch (error) {
     console.error('=== ERROR ===');
-    console.error('Error details:', error);
     console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
     
     res.status(500).json({ 
-      error: 'Failed to process payment',
-      details: error.message 
+      error: 'Server error',
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 }
