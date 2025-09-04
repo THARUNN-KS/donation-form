@@ -48,68 +48,24 @@ export default async function handler(req, res) {
       console.log('=== PROCESSING MONTHLY SUBSCRIPTION ===');
       
       try {
-        // Step 1: Create customer
-        console.log('Creating customer...');
-        const customer = await razorpay.customers.create({
-          name: name,
-          email: email,
-          contact: phone || '',
-          fail_existing: 0
-        });
-        console.log('Customer created:', customer.id);
-
-        // Step 2: Ensure plan exists
-        const planId = `monthly_${amount}`;
-        console.log('Checking for plan:', planId);
-        
-        let plan;
-        try {
-          plan = await razorpay.plans.fetch(planId);
-          console.log('Plan found:', plan.id);
-        } catch (planError) {
-          console.log('Plan not found, creating new plan...');
-          plan = await razorpay.plans.create({
-            id: planId,
-            item: {
-              name: `Monthly Donation ₹${amount}`,
-              amount: parseInt(amount) * 100,
-              currency: 'INR'
-            },
-            period: 'monthly',
-            interval: 1,
-            notes: {
-              donation_type: 'monthly_recurring',
-              amount_inr: amount
-            }
-          });
-          console.log('Plan created:', plan.id);
-        }
-
-        // Step 3: Create subscription
-        console.log('Creating subscription...');
-        const subscription = await razorpay.subscriptions.create({
-          plan_id: planId,
-          customer_notify: 1,
-          total_count: 60, // 5 years
-          start_at: Math.floor(Date.now() / 1000) + 300, // Start in 5 minutes
-          notes: {
-            donor_name: name,
-            donor_email: email,
-            donor_phone: phone || '',
-            donation_type: 'monthly_recurring'
-          }
-        });
-        console.log('Subscription created successfully:', subscription.id);
+        // Use the Supabase approach for creating subscriptions
+        const subscriptionResult = await createRazorpaySubscription(
+          razorpay, 
+          parseFloat(amount), 
+          name, 
+          email, 
+          phone
+        );
 
         return res.status(200).json({
           type: 'subscription',
-          subscription_id: subscription.id,
-          customer_id: customer.id,
-          plan_id: planId,
+          subscription_id: subscriptionResult.id,
+          customer_id: subscriptionResult.customer_id,
+          plan_id: subscriptionResult.plan_id,
           amount: parseInt(amount) * 100,
           currency: 'INR',
-          short_url: subscription.short_url,
-          status: subscription.status,
+          short_url: subscriptionResult.short_url,
+          status: subscriptionResult.status,
           message: 'Monthly subscription created successfully'
         });
 
@@ -190,5 +146,183 @@ export default async function handler(req, res) {
       message: 'Unable to process your donation at this time. Please try again.',
       details: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
+  }
+}
+
+// Function to get or create a Razorpay plan (adapted from Supabase)
+async function getOrCreateRazorpayPlan(razorpay, amount, description) {
+  // First, check if plan with this amount already exists
+  try {
+    const plans = await razorpay.plans.all({ count: 100 });
+    
+    // Check if a matching plan exists
+    if (plans && plans.items && plans.items.length > 0) {
+      for (const plan of plans.items) {
+        // Check if amount matches
+        if (plan.item && plan.item.amount === amount * 100) {
+          console.log(`Found existing Razorpay plan: ${plan.id}`);
+          return plan.id;
+        }
+      }
+    }
+  } catch (error) {
+    console.log('Error fetching plans, will create new one:', error.message);
+  }
+
+  // If no matching plan found, create a new one
+  const planData = {
+    period: 'monthly',
+    interval: 1,
+    item: {
+      name: description || `Monthly donation of INR ${amount}`,
+      amount: amount * 100,
+      currency: 'INR',
+      description: description || `Monthly donation of INR ${amount}`
+    },
+    notes: {
+      created_by: 'donation_system',
+      creation_timestamp: new Date().toISOString()
+    }
+  };
+
+  try {
+    const newPlan = await razorpay.plans.create(planData);
+    console.log(`Created new Razorpay plan: ${newPlan.id}`);
+    return newPlan.id;
+  } catch (error) {
+    console.error('Razorpay plan creation error:', error);
+    throw new Error(`Plan creation failed: ${error.message}`);
+  }
+}
+
+// Function to find or create a Razorpay customer (adapted from Supabase)
+async function getOrCreateRazorpayCustomer(razorpay, name, email, phone) {
+  // If email is missing, create a new customer
+  if (!email) {
+    return createNewRazorpayCustomer(razorpay, name, email, phone);
+  }
+
+  // First, check if customer already exists by email
+  try {
+    const customers = await razorpay.customers.all({ 
+      count: 10,
+      skip: 0 
+    });
+
+    // Check if a matching customer exists
+    if (customers && customers.items && customers.items.length > 0) {
+      for (const customer of customers.items) {
+        if (customer.email && customer.email.toLowerCase() === email.toLowerCase()) {
+          console.log(`Found existing Razorpay customer by email: ${customer.id}`);
+          return customer.id;
+        }
+      }
+    }
+  } catch (error) {
+    console.log('Error fetching customers, will create new one:', error.message);
+  }
+
+  // If no matching customer found, create a new one
+  return createNewRazorpayCustomer(razorpay, name, email, phone);
+}
+
+// Helper to create a new Razorpay customer
+async function createNewRazorpayCustomer(razorpay, name, email, phone) {
+  const customerData = {
+    name: name || 'Donor',
+    email: email || '',
+    contact: phone || '',
+    fail_existing: 0,
+    notes: {
+      source: 'Donation Website',
+      creation_date: new Date().toISOString()
+    }
+  };
+
+  try {
+    const newCustomer = await razorpay.customers.create(customerData);
+    console.log(`Created new Razorpay customer: ${newCustomer.id}`);
+    return newCustomer.id;
+  } catch (error) {
+    console.error('Razorpay customer creation error:', error);
+    throw new Error(`Customer creation failed: ${error.message}`);
+  }
+}
+
+// Function to create a Razorpay subscription (adapted from Supabase)
+async function createRazorpaySubscription(razorpay, amount, name = '', email = '', phone = '') {
+  try {
+    // Step 1: Get or create a plan
+    const planId = await getOrCreateRazorpayPlan(razorpay, amount, `Monthly donation of INR ${amount}`);
+    
+    // Step 2: Get or create a customer
+    let customerId = '';
+    if (email || phone) {
+      customerId = await getOrCreateRazorpayCustomer(razorpay, name, email, phone);
+    }
+
+    // Step 3: Create subscription
+    const subscriptionData = {
+      plan_id: planId,
+      total_count: 360, // 30 years like in Supabase
+      quantity: 1,
+      customer_notify: 1,
+      start_at: Math.floor(Date.now() / 1000) + 300, // Start in 5 minutes
+      notes: {
+        donation_amount: amount,
+        created_by: 'donation_system',
+        source: 'Donation Website'
+      }
+    };
+
+    // Add customer_id if available
+    if (customerId) {
+      subscriptionData.customer_id = customerId;
+      subscriptionData.notes.customer_name = name;
+      subscriptionData.notes.customer_email = email;
+    }
+
+    // Create subscription
+    console.log('Creating Razorpay subscription with data:', JSON.stringify(subscriptionData));
+    const subscriptionResult = await razorpay.subscriptions.create(subscriptionData);
+
+    // If no short_url, try to create payment link as fallback (like Supabase does)
+    if (!subscriptionResult.short_url) {
+      console.log('No short_url found, creating payment link as fallback...');
+      try {
+        const paymentLinkData = {
+          amount: amount * 100,
+          currency: 'INR',
+          accept_partial: false,
+          description: `Monthly donation of INR ${amount}`,
+          customer: {
+            name: name || 'Donor',
+            email: email || '',
+            contact: phone || ''
+          },
+          notes: {
+            subscription_id: subscriptionResult.id,
+            plan_id: planId,
+            donation_type: 'recurring',
+            source: 'Donation Website'
+          },
+          callback_url: 'https://donation-form-j142.vercel.app',
+          callback_method: 'get'
+        };
+
+        const paymentLink = await razorpay.paymentLink.create(paymentLinkData);
+        if (paymentLink.short_url) {
+          console.log('Created payment link as fallback:', paymentLink.short_url);
+          subscriptionResult.short_url = paymentLink.short_url;
+        }
+      } catch (linkError) {
+        console.error('Failed to create payment link fallback:', linkError);
+      }
+    }
+
+    return subscriptionResult;
+  } catch (error) {
+    console.error('Error in createRazorpaySubscription:', error);
+    throw error;
   }
 }
