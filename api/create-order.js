@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     console.log('=== API CALLED ===');
     console.log('Request body:', req.body);
 
-    const { amount, name, email, phone, frequency } = req.body;
+    const { amount, name, email, phone, frequency, isSubscriptionSetup } = req.body;
 
     // Validate required fields
     if (!amount || !name) {
@@ -45,65 +45,37 @@ export default async function handler(req, res) {
     console.log('Processing frequency:', frequency);
 
     if (frequency === 'Monthly') {
-      console.log('=== PROCESSING MONTHLY SUBSCRIPTION ===');
+      console.log('=== PROCESSING MONTHLY DONATION AS FIRST PAYMENT ===');
       
-      try {
-        // Use the Supabase approach for creating subscriptions
-        const subscriptionResult = await createRazorpaySubscription(
-          razorpay, 
-          parseFloat(amount), 
-          name, 
-          email, 
-          phone
-        );
+      // For monthly donations, create a one-time order first
+      // After payment confirmation, we can set up the subscription
+      const options = {
+        amount: Math.round(parseFloat(amount) * 100),
+        currency: 'INR',
+        receipt: `monthly_first_payment_${Date.now()}`,
+        payment_capture: 1,
+        notes: {
+          donation_type: 'monthly_subscription_first_payment',
+          donor_name: name,
+          donor_email: email,
+          donor_phone: phone || '',
+          frequency: 'Monthly',
+          subscription_amount: amount,
+          needs_subscription_setup: 'true'
+        }
+      };
 
-        return res.status(200).json({
-          type: 'subscription',
-          subscription_id: subscriptionResult.id,
-          customer_id: subscriptionResult.customer_id,
-          plan_id: subscriptionResult.plan_id,
-          amount: parseInt(amount) * 100,
-          currency: 'INR',
-          short_url: subscriptionResult.short_url,
-          status: subscriptionResult.status,
-          message: 'Monthly subscription created successfully'
-        });
+      const order = await razorpay.orders.create(options);
+      console.log('Monthly first payment order created:', order.id);
 
-      } catch (subscriptionError) {
-        console.error('=== SUBSCRIPTION CREATION FAILED ===');
-        console.error('Error details:', subscriptionError);
-        console.log('FALLING BACK TO ONE-TIME ORDER WITH MONTHLY TAGS');
-
-        // Fallback: Create one-time order with monthly recurring flags
-        const fallbackOptions = {
-          amount: Math.round(parseFloat(amount) * 100),
-          currency: 'INR',
-          receipt: `monthly_donation_${Date.now()}`,
-          payment_capture: 1,
-          notes: {
-            donation_type: 'monthly_recurring',
-            donor_name: name,
-            donor_email: email,
-            donor_phone: phone || '',
-            frequency: 'Monthly',
-            recurring_setup_needed: 'true',
-            fallback_reason: 'subscription_creation_failed',
-            original_error: subscriptionError.message
-          }
-        };
-
-        const fallbackOrder = await razorpay.orders.create(fallbackOptions);
-        console.log('Fallback order created:', fallbackOrder.id);
-
-        return res.status(200).json({
-          type: 'order_with_recurring_intent',
-          id: fallbackOrder.id,
-          amount: fallbackOrder.amount,
-          currency: fallbackOrder.currency,
-          is_fallback: true,
-          message: 'Processing as one-time payment with monthly setup intent'
-        });
-      }
+      return res.status(200).json({
+        type: 'order',
+        id: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        isMonthlyFirstPayment: true,
+        message: 'First payment for monthly subscription'
+      });
 
     } else {
       console.log('=== PROCESSING ONE-TIME DONATION ===');
@@ -149,7 +121,52 @@ export default async function handler(req, res) {
   }
 }
 
-// Function to get or create a Razorpay plan (adapted from Supabase)
+// Optional: Create a separate endpoint to set up subscription after successful payment
+// This could be called after payment confirmation
+async function createSubscriptionAfterPayment(razorpay, amount, name, email, phone) {
+  try {
+    // Step 1: Get or create a plan
+    const planId = await getOrCreateRazorpayPlan(razorpay, amount, `Monthly donation of INR ${amount}`);
+    
+    // Step 2: Get or create a customer
+    let customerId = '';
+    if (email || phone) {
+      customerId = await getOrCreateRazorpayCustomer(razorpay, name, email, phone);
+    }
+
+    // Step 3: Create subscription (starting from next month since first payment is already done)
+    const subscriptionData = {
+      plan_id: planId,
+      total_count: 359, // 359 more payments (first payment already done)
+      quantity: 1,
+      customer_notify: 1,
+      start_at: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60), // Start next month
+      notes: {
+        donation_amount: amount,
+        created_by: 'donation_system',
+        source: 'Donation Website',
+        first_payment_completed: 'true'
+      }
+    };
+
+    // Add customer_id if available
+    if (customerId) {
+      subscriptionData.customer_id = customerId;
+      subscriptionData.notes.customer_name = name;
+      subscriptionData.notes.customer_email = email;
+    }
+
+    const subscriptionResult = await razorpay.subscriptions.create(subscriptionData);
+    console.log('Subscription created after first payment:', subscriptionResult.id);
+    
+    return subscriptionResult;
+  } catch (error) {
+    console.error('Error in createSubscriptionAfterPayment:', error);
+    throw error;
+  }
+}
+
+// Function to get or create a Razorpay plan
 async function getOrCreateRazorpayPlan(razorpay, amount, description) {
   // First, check if plan with this amount already exists
   try {
@@ -195,7 +212,7 @@ async function getOrCreateRazorpayPlan(razorpay, amount, description) {
   }
 }
 
-// Function to find or create a Razorpay customer (adapted from Supabase)
+// Function to find or create a Razorpay customer
 async function getOrCreateRazorpayCustomer(razorpay, name, email, phone) {
   // If email is missing, create a new customer
   if (!email) {
@@ -246,83 +263,5 @@ async function createNewRazorpayCustomer(razorpay, name, email, phone) {
   } catch (error) {
     console.error('Razorpay customer creation error:', error);
     throw new Error(`Customer creation failed: ${error.message}`);
-  }
-}
-
-// Function to create a Razorpay subscription (adapted from Supabase)
-async function createRazorpaySubscription(razorpay, amount, name = '', email = '', phone = '') {
-  try {
-    // Step 1: Get or create a plan
-    const planId = await getOrCreateRazorpayPlan(razorpay, amount, `Monthly donation of INR ${amount}`);
-    
-    // Step 2: Get or create a customer
-    let customerId = '';
-    if (email || phone) {
-      customerId = await getOrCreateRazorpayCustomer(razorpay, name, email, phone);
-    }
-
-    // Step 3: Create subscription
-    const subscriptionData = {
-      plan_id: planId,
-      total_count: 360, // 30 years like in Supabase
-      quantity: 1,
-      customer_notify: 1,
-      start_at: Math.floor(Date.now() / 1000) + 300, // Start in 5 minutes
-      notes: {
-        donation_amount: amount,
-        created_by: 'donation_system',
-        source: 'Donation Website'
-      }
-    };
-
-    // Add customer_id if available
-    if (customerId) {
-      subscriptionData.customer_id = customerId;
-      subscriptionData.notes.customer_name = name;
-      subscriptionData.notes.customer_email = email;
-    }
-
-    // Create subscription
-    console.log('Creating Razorpay subscription with data:', JSON.stringify(subscriptionData));
-    const subscriptionResult = await razorpay.subscriptions.create(subscriptionData);
-
-    // If no short_url, try to create payment link as fallback (like Supabase does)
-    if (!subscriptionResult.short_url) {
-      console.log('No short_url found, creating payment link as fallback...');
-      try {
-        const paymentLinkData = {
-          amount: amount * 100,
-          currency: 'INR',
-          accept_partial: false,
-          description: `Monthly donation of INR ${amount}`,
-          customer: {
-            name: name || 'Donor',
-            email: email || '',
-            contact: phone || ''
-          },
-          notes: {
-            subscription_id: subscriptionResult.id,
-            plan_id: planId,
-            donation_type: 'recurring',
-            source: 'Donation Website'
-          },
-          callback_url: 'https://donation-form-j142.vercel.app',
-          callback_method: 'get'
-        };
-
-        const paymentLink = await razorpay.paymentLink.create(paymentLinkData);
-        if (paymentLink.short_url) {
-          console.log('Created payment link as fallback:', paymentLink.short_url);
-          subscriptionResult.short_url = paymentLink.short_url;
-        }
-      } catch (linkError) {
-        console.error('Failed to create payment link fallback:', linkError);
-      }
-    }
-
-    return subscriptionResult;
-  } catch (error) {
-    console.error('Error in createRazorpaySubscription:', error);
-    throw error;
   }
 }
