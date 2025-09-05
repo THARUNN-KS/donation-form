@@ -173,6 +173,65 @@ function App() {
     });
   };
 
+  const openRazorpaySubscriptionCheckout = async (subscriptionData) => {
+    try {
+      await waitForRazorpay();
+
+      const options = {
+        key: 'rzp_test_NkZWk4SLJaXiCx',
+        subscription_id: subscriptionData.subscription_id,
+        name: 'Your Organization',
+        description: `Monthly Subscription - ${getCurrentCurrencySymbol()}${getCurrentAmount()}`,
+        prefill: {
+          name: formData.name,
+          email: formData.email,
+          contact: formData.phone
+        },
+        theme: {
+          color: '#3399cc'
+        },
+        handler: function(response) {
+          console.log('Subscription payment successful:', response);
+          setMessage('✅ Monthly subscription activated successfully! Your recurring donations are now set up.');
+          setIsLoading(false);
+          
+          // Reset form after successful payment
+          setTimeout(() => {
+            setStep(1);
+            setFormData({
+              amount: '',
+              customAmount: '',
+              currency: 'INR',
+              frequency: 'One-time',
+              name: '',
+              email: '',
+              phone: '',
+              address: '',
+              city: '',
+              country: ''
+            });
+            setMessage('');
+          }, 5000);
+        },
+        modal: {
+          ondismiss: function() {
+            setMessage('Subscription payment cancelled');
+            setIsLoading(false);
+          }
+        }
+      };
+
+      console.log('Opening Razorpay subscription popup with options:', options);
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+
+    } catch (error) {
+      console.error('Razorpay subscription popup error:', error);
+      setMessage(`❌ Payment gateway error: ${error.message}`);
+      setIsLoading(false);
+    }
+  };
+
   const openRazorpayCheckout = async (paymentData, isMonthly = false) => {
     try {
       await waitForRazorpay();
