@@ -162,7 +162,7 @@ function App() {
       };
 
       console.log('Opening Razorpay with options:', options);
-      const rzp = new Razorpay(options);
+      const rzp = new window.Razorpay(options);
       rzp.open();
 
     } catch (error) {
