@@ -298,17 +298,17 @@ function App() {
     }
   };
 
-  const handleStripePayment = async () => {
-    // TODO: Implement Stripe payment for foreign currencies
-    setMessage('💳 Stripe payment integration coming soon for foreign currencies!');
-    setIsLoading(false);
-  };
+  // const handleStripePayment = async () => {
+  //   // TODO: Implement Stripe payment for foreign currencies
+  //   setMessage('💳 Stripe payment integration coming soon for foreign currencies!');
+  //   setIsLoading(false);
+  // };
 
-  const handleStripePayment = async () => {
-    // TODO: Implement Stripe payment for foreign currencies
-    setMessage('Stripe payment integration coming soon for foreign currencies!');
-    setIsLoading(false);
-  };
+  // const handleStripePayment = async () => {
+  //   // TODO: Implement Stripe payment for foreign currencies
+  //   setMessage('Stripe payment integration coming soon for foreign currencies!');
+  //   setIsLoading(false);
+  // };
 
   const processDonation = async () => {
     if (!validateStep(2)) return;
