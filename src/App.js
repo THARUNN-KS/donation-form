@@ -2,50 +2,29 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 
 function App() {
-  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     amount: '',
-    customAmount: '',
-    currency: 'INR',
-    frequency: 'One-time',
     name: '',
     email: '',
     phone: '',
-    address: '',
-    city: '',
-    country: ''
+    frequency: 'One-time'
   });
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
-  // Preset amount options
-  const presetAmounts = ['1000', '2000', '5000', '10000', '25000', '50000'];
-  
-  // Currency options
-  const currencies = [
-    { value: 'INR', label: 'Indian Rupee (₹)', symbol: '₹' },
-    { value: 'USD', label: 'US Dollar ($)', symbol: '$' },
-    { value: 'EUR', label: 'Euro (€)', symbol: '€' },
-    { value: 'GBP', label: 'British Pound (£)', symbol: '£' }
-  ];
-
-  // Countries list (simplified)
-  const countries = [
-    'India', 'United States', 'United Kingdom', 'Canada', 'Australia', 
-    'Germany', 'France', 'Japan', 'Singapore', 'UAE', 'Other'
-  ];
-
   // Load Razorpay script dynamically
   useEffect(() => {
     const loadRazorpay = () => {
       return new Promise((resolve, reject) => {
+        // Check if Razorpay is already loaded
         if (window.Razorpay) {
           setRazorpayLoaded(true);
           resolve(true);
           return;
         }
 
+        // Check if script already exists
         const existingScript = document.getElementById('razorpay-script');
         if (existingScript) {
           existingScript.onload = () => {
@@ -55,6 +34,7 @@ function App() {
           return;
         }
 
+        // Create and load script
         const script = document.createElement('script');
         script.id = 'razorpay-script';
         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
@@ -72,80 +52,38 @@ function App() {
       });
     };
 
-    // Only load Razorpay for INR currency
-    if (formData.currency === 'INR') {
-      loadRazorpay().catch(error => {
-        console.error('Razorpay loading error:', error);
-        setMessage('❌ Failed to load payment gateway. Please refresh the page.');
-      });
-    }
-  }, [formData.currency]);
+    loadRazorpay().catch(error => {
+      console.error('Razorpay loading error:', error);
+      setMessage('❌ Failed to load payment gateway. Please refresh the page.');
+    });
+  }, []);
 
-  const handleAmountSelect = (amount) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      amount: amount,
-      customAmount: '' 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
     }));
   };
 
-  const handleCustomAmount = (value) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      customAmount: value,
-      amount: value 
-    }));
-  };
-
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const getCurrentAmount = () => {
-    return formData.customAmount || formData.amount;
-  };
-
-  const getCurrentCurrencySymbol = () => {
-    const currency = currencies.find(c => c.value === formData.currency);
-    return currency ? currency.symbol : '₹';
-  };
-
-  const validateStep = (stepNumber) => {
-    switch (stepNumber) {
-      case 1:
-        if (!getCurrentAmount()) {
-          setMessage('Please select or enter an amount');
-          return false;
-        }
-        if (isNaN(getCurrentAmount()) || parseFloat(getCurrentAmount()) <= 0) {
-          setMessage('Please enter a valid amount');
-          return false;
-        }
-        break;
-      case 2:
-        if (!formData.name || !formData.email || !formData.country) {
-          setMessage('Please fill in all required fields');
-          return false;
-        }
-        if (formData.frequency === 'Monthly' && !formData.email) {
-          setMessage('Email is required for monthly donations');
-          return false;
-        }
-        break;
+  const validateForm = () => {
+    if (!formData.amount || !formData.name) {
+      setMessage('Please fill in all required fields');
+      return false;
     }
-    setMessage('');
+
+    if (formData.frequency === 'Monthly' && !formData.email) {
+      setMessage('Email is required for monthly donations');
+      return false;
+    }
+
+    const amount = parseFloat(formData.amount);
+    if (isNaN(amount) || amount <= 0) {
+      setMessage('Please enter a valid amount');
+      return false;
+    }
+
     return true;
-  };
-
-  const nextStep = () => {
-    if (validateStep(step)) {
-      setStep(step + 1);
-    }
-  };
-
-  const prevStep = () => {
-    setStep(step - 1);
-    setMessage('');
   };
 
   const waitForRazorpay = () => {
@@ -173,77 +111,19 @@ function App() {
     });
   };
 
-  const openRazorpaySubscriptionCheckout = async (subscriptionData) => {
-    try {
-      await waitForRazorpay();
-
-      const options = {
-        key: 'rzp_test_NkZWk4SLJaXiCx',
-        subscription_id: subscriptionData.subscription_id,
-        name: 'Your Organization',
-        description: `Monthly Subscription - ${getCurrentCurrencySymbol()}${getCurrentAmount()}`,
-        prefill: {
-          name: formData.name,
-          email: formData.email,
-          contact: formData.phone
-        },
-        theme: {
-          color: '#3399cc'
-        },
-        handler: function(response) {
-          console.log('Subscription payment successful:', response);
-          setMessage('✅ Monthly subscription activated successfully! Your recurring donations are now set up.');
-          setIsLoading(false);
-          
-          // Reset form after successful payment
-          setTimeout(() => {
-            setStep(1);
-            setFormData({
-              amount: '',
-              customAmount: '',
-              currency: 'INR',
-              frequency: 'One-time',
-              name: '',
-              email: '',
-              phone: '',
-              address: '',
-              city: '',
-              country: ''
-            });
-            setMessage('');
-          }, 5000);
-        },
-        modal: {
-          ondismiss: function() {
-            setMessage('Subscription payment cancelled');
-            setIsLoading(false);
-          }
-        }
-      };
-
-      console.log('Opening Razorpay subscription popup with options:', options);
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-
-    } catch (error) {
-      console.error('Razorpay subscription popup error:', error);
-      setMessage(`❌ Payment gateway error: ${error.message}`);
-      setIsLoading(false);
-    }
-  };
-
   const openRazorpayCheckout = async (paymentData, isMonthly = false) => {
     try {
+      // Wait for Razorpay to be available
       await waitForRazorpay();
 
       const options = {
-        key: 'rzp_test_NkZWk4SLJaXiCx',
+        key: 'rzp_test_NkZWk4SLJaXiCx', // Your Razorpay key
         amount: paymentData.amount,
         currency: paymentData.currency,
         name: 'Your Organization',
         description: isMonthly ? 
-          `Monthly Donation - ${getCurrentCurrencySymbol()}${getCurrentAmount()}` : 
-          `Donation - ${getCurrentCurrencySymbol()}${getCurrentAmount()}`,
+          `Monthly Donation - ₹${formData.amount}` : 
+          `Donation - ₹${formData.amount}`,
         order_id: paymentData.id,
         prefill: {
           name: formData.name,
@@ -261,20 +141,14 @@ function App() {
           setMessage(successMessage);
           setIsLoading(false);
           
-          // Reset form after successful payment
+          // Reset form on successful payment
           setTimeout(() => {
-            setStep(1);
             setFormData({
               amount: '',
-              customAmount: '',
-              currency: 'INR',
-              frequency: 'One-time',
               name: '',
               email: '',
               phone: '',
-              address: '',
-              city: '',
-              country: ''
+              frequency: 'One-time'
             });
             setMessage('');
           }, 5000);
@@ -298,325 +172,182 @@ function App() {
     }
   };
 
-  // const handleStripePayment = async () => {
-  //   // TODO: Implement Stripe payment for foreign currencies
-  //   setMessage('💳 Stripe payment integration coming soon for foreign currencies!');
-  //   setIsLoading(false);
-  // };
+  const initializePayment = async () => {
+    if (!validateForm()) return;
 
-  // const handleStripePayment = async () => {
-  //   // TODO: Implement Stripe payment for foreign currencies
-  //   setMessage('Stripe payment integration coming soon for foreign currencies!');
-  //   setIsLoading(false);
-  // };
-
-  const processDonation = async () => {
-    if (!validateStep(2)) return;
+    if (!razorpayLoaded) {
+      setMessage('❌ Payment gateway is still loading. Please wait a moment and try again.');
+      return;
+    }
 
     setIsLoading(true);
     setMessage('Processing your donation...');
 
     try {
-      if (formData.currency === 'INR') {
-        // Process with Razorpay
-        console.log('Processing with Razorpay for INR');
+      console.log('Sending payment request:', formData);
+
+      const response = await fetch('/api/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+      console.log('Payment response:', data);
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || 'Failed to process payment');
+      }
+
+      // Handle different response types
+      if (data.type === 'subscription') {
+        // True subscription created
+        setMessage(`✅ Monthly subscription set up successfully! Subscription ID: ${data.subscription_id}`);
         
-        const paymentData = {
-          amount: getCurrentAmount(),
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          frequency: formData.frequency
-        };
-
-        const response = await fetch('/api/create-order', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(paymentData)
-        });
-
-        const data = await response.json();
-        console.log('Payment response:', data);
-
-        if (!response.ok) {
-          throw new Error(data.message || data.error || 'Failed to process payment');
+        if (data.short_url) {
+          setMessage(prev => prev + ` You can manage your subscription here: ${data.short_url}`);
         }
+        setIsLoading(false);
 
-        // Handle different response types
-        if (data.type === 'subscription') {
-          // For subscriptions, redirect to Razorpay's payment page
-          if (data.short_url) {
-            console.log('Redirecting to subscription payment:', data.short_url);
-            setMessage('✅ Subscription created! Redirecting to payment page...');
-            
-            // Open payment page in the same window
-            setTimeout(() => {
-              window.location.href = data.short_url;
-            }, 1500);
-          } else {
-            setMessage(`✅ Monthly subscription set up successfully! Subscription ID: ${data.subscription_id}`);
-          }
-          setIsLoading(false);
-        } else if (data.type === 'order_with_recurring_intent') {
-          console.log('Using fallback method for monthly donation');
-          await openRazorpayCheckout(data, true);
-        } else if (data.type === 'order') {
-          await openRazorpayCheckout(data, false);
-        } else {
-          throw new Error('Unexpected response type from server');
-        }
+      } else if (data.type === 'order_with_recurring_intent') {
+        // Fallback: one-time order with monthly intent
+        console.log('Using fallback method for monthly donation');
+        await openRazorpayCheckout(data, true);
+
+      } else if (data.type === 'order') {
+        // Regular one-time donation
+        await openRazorpayCheckout(data, false);
 
       } else {
-        // Process with Stripe for foreign currencies
-        console.log('Processing with Stripe for foreign currency');
-        await handleStripePayment();
+        throw new Error('Unexpected response type from server');
       }
 
     } catch (error) {
-      console.error('Payment processing error:', error);
+      console.error('Payment initiation error:', error);
       setMessage(`❌ Error: ${error.message}`);
       setIsLoading(false);
     }
   };
 
-  const renderStep1 = () => (
-    <div className="step-content">
-      <div className="step-indicator">
-        <div className="step active">1</div>
-        <div className="step">2</div>
-        <div className="step">3</div>
-      </div>
-
-      <div className="amount-selection">
-        <div className="preset-amounts">
-          {presetAmounts.map(amount => (
-            <button
-              key={amount}
-              className={`amount-btn ${formData.amount === amount && !formData.customAmount ? 'selected' : ''}`}
-              onClick={() => handleAmountSelect(amount)}
-            >
-              {getCurrentCurrencySymbol()}{parseInt(amount).toLocaleString()}
-            </button>
-          ))}
-        </div>
-
-        <div className="custom-amount">
-          <input
-            type="number"
-            placeholder="Enter custom amount"
-            value={formData.customAmount}
-            onChange={(e) => handleCustomAmount(e.target.value)}
-            className="custom-amount-input"
-          />
-        </div>
-      </div>
-
-      <div className="form-group">
-        <label>Currency</label>
-        <select
-          value={formData.currency}
-          onChange={(e) => handleInputChange('currency', e.target.value)}
-          className="currency-select"
-        >
-          {currencies.map(currency => (
-            <option key={currency.value} value={currency.value}>
-              {currency.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="form-group">
-        <label>Donation Frequency</label>
-        <div className="frequency-buttons">
-          <button
-            type="button"
-            className={formData.frequency === 'One-time' ? 'active' : ''}
-            onClick={() => handleInputChange('frequency', 'One-time')}
-          >
-            One-time
-          </button>
-          <button
-            type="button"
-            className={formData.frequency === 'Monthly' ? 'active' : ''}
-            onClick={() => handleInputChange('frequency', 'Monthly')}
-          >
-            Monthly
-          </button>
-        </div>
-      </div>
-
-      <button className="continue-btn" onClick={nextStep}>
-        Continue →
-      </button>
-    </div>
-  );
-
-  const renderStep2 = () => (
-    <div className="step-content">
-      <div className="step-indicator">
-        <div className="step completed">1</div>
-        <div className="step active">2</div>
-        <div className="step">3</div>
-      </div>
-
-      <div className="form-row">
-        <div className="form-group full-width">
-          <label>Full Name*</label>
-          <input
-            type="text"
-            value={formData.name}
-            onChange={(e) => handleInputChange('name', e.target.value)}
-            required
-          />
-        </div>
-      </div>
-
-      <div className="form-row">
-        <div className="form-group">
-          <label>Email Address*</label>
-          <input
-            type="email"
-            value={formData.email}
-            onChange={(e) => handleInputChange('email', e.target.value)}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Phone Number</label>
-          <input
-            type="tel"
-            value={formData.phone}
-            onChange={(e) => handleInputChange('phone', e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className="form-group">
-        <label>Address</label>
-        <input
-          type="text"
-          value={formData.address}
-          onChange={(e) => handleInputChange('address', e.target.value)}
-        />
-      </div>
-
-      <div className="form-row">
-        <div className="form-group">
-          <label>City</label>
-          <input
-            type="text"
-            value={formData.city}
-            onChange={(e) => handleInputChange('city', e.target.value)}
-          />
-        </div>
-        <div className="form-group">
-          <label>Country*</label>
-          <select
-            value={formData.country}
-            onChange={(e) => handleInputChange('country', e.target.value)}
-            required
-          >
-            <option value="">Select Country</option>
-            {countries.map(country => (
-              <option key={country} value={country}>{country}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="step-buttons">
-        <button className="back-btn" onClick={prevStep}>
-          ← Back
-        </button>
-        <button className="continue-btn" onClick={nextStep}>
-          Continue →
-        </button>
-      </div>
-    </div>
-  );
-
-  const renderStep3 = () => (
-    <div className="step-content">
-      <div className="step-indicator">
-        <div className="step completed">1</div>
-        <div className="step completed">2</div>
-        <div className="step active">3</div>
-      </div>
-
-      <h3>Confirm Your Donation</h3>
-
-      <div className="confirmation-details">
-        <div className="detail-row">
-          <span>Donation Amount:</span>
-          <span className="amount">{getCurrentCurrencySymbol()}{parseInt(getCurrentAmount()).toLocaleString()}</span>
-        </div>
-        <div className="detail-row">
-          <span>Frequency:</span>
-          <span>{formData.frequency}</span>
-        </div>
-        <div className="detail-row">
-          <span>Name:</span>
-          <span>{formData.name}</span>
-        </div>
-        <div className="detail-row">
-          <span>Email:</span>
-          <span>{formData.email}</span>
-        </div>
-        {formData.currency !== 'INR' && (
-          <div className="detail-row">
-            <span>Currency:</span>
-            <span>{formData.currency}</span>
-          </div>
-        )}
-      </div>
-
-      {formData.currency !== 'INR' && (
-        <div className="stripe-notice">
-          💳 Foreign currency payments will be processed via Stripe
-        </div>
-      )}
-
-      <div className="step-buttons">
-        <button className="back-btn" onClick={prevStep}>
-          ← Back
-        </button>
-        <button 
-          className="donate-btn"
-          onClick={processDonation}
-          disabled={isLoading || (formData.currency === 'INR' && !razorpayLoaded)}
-        >
-          {isLoading 
-            ? 'Processing...' 
-            : (formData.currency === 'INR' && !razorpayLoaded)
-              ? 'Loading...' 
-              : 'Donate Now'
-          }
-        </button>
-      </div>
-    </div>
-  );
-
   return (
     <div className="App">
       <div className="donation-container">
         <div className="donation-form">
-          <div className="form-header">
-            <div className="emoji">🤝</div>
-            <h2>Embedded Form</h2>
+          <h2>Make a Donation</h2>
+          
+          {!razorpayLoaded && (
+            <div className="loading-message">
+              🔄 Loading payment gateway...
+            </div>
+          )}
+          
+          <div className="form-group">
+            <label>Donation Type:</label>
+            <div className="frequency-buttons">
+              <button
+                type="button"
+                className={formData.frequency === 'One-time' ? 'active' : ''}
+                onClick={() => setFormData(prev => ({ ...prev, frequency: 'One-time' }))}
+              >
+                One-time
+              </button>
+              <button
+                type="button"
+                className={formData.frequency === 'Monthly' ? 'active' : ''}
+                onClick={() => setFormData(prev => ({ ...prev, frequency: 'Monthly' }))}
+              >
+                Monthly
+              </button>
+            </div>
           </div>
 
-          {step === 1 && renderStep1()}
-          {step === 2 && renderStep2()}
-          {step === 3 && renderStep3()}
+          <div className="form-group">
+            <label htmlFor="amount">Amount (₹) *:</label>
+            <input
+              type="number"
+              id="amount"
+              name="amount"
+              value={formData.amount}
+              onChange={handleChange}
+              placeholder="Enter amount"
+              min="1"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="name">Full Name *:</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Enter your full name"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="email">
+              Email {formData.frequency === 'Monthly' ? '*' : ''}:
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter your email"
+              required={formData.frequency === 'Monthly'}
+            />
+            {formData.frequency === 'Monthly' && (
+              <small className="help-text">Email required for monthly donations</small>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="phone">Phone (Optional):</label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              placeholder="Enter your phone number"
+            />
+          </div>
+
+          <button 
+            className="donate-button" 
+            onClick={initializePayment}
+            disabled={isLoading || !razorpayLoaded}
+          >
+            {isLoading 
+              ? 'Processing...' 
+              : !razorpayLoaded 
+                ? 'Loading...' 
+                : `Donate ₹${formData.amount || '0'} ${formData.frequency}`
+            }
+          </button>
 
           {message && (
             <div className={`message ${message.includes('✅') ? 'success' : message.includes('❌') ? 'error' : 'info'}`}>
               {message}
             </div>
           )}
+
+          <div className="info-text">
+            <p>
+              {formData.frequency === 'Monthly' 
+                ? '🔄 Monthly donations help us plan better and have greater impact.'
+                : '💝 Your one-time donation makes a difference.'
+              }
+            </p>
+            <p>🔒 Secure payment powered by Razorpay</p>
+          </div>
         </div>
       </div>
     </div>
