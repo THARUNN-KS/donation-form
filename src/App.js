@@ -57,7 +57,6 @@ function App() {
     try {
       console.log('Sending payment request:', formData);
 
-      // 1. Get response from API
       const response = await fetch('/api/create-order', {
         method: 'POST',
         headers: {
@@ -73,51 +72,75 @@ function App() {
         throw new Error(data.message || data.error || 'Failed to process payment');
       }
 
-      // 2. Send response directly to Razorpay
-      const options = {
-        key: 'rzp_test_NkZWk4SLJaXiCx',
-        amount: data.amount,
-        currency: data.currency,
-        name: 'Your Organization',
-        description: `Donation - ₹${formData.amount}`,
-        order_id: data.id,
-        prefill: {
-          name: formData.name,
-          email: formData.email,
-          contact: formData.phone
-        },
-        theme: {
-          color: '#3399cc'
-        },
-        handler: function(response) {
-          console.log('Payment successful:', response);
-          setMessage('Thank you for your generous donation!');
-          setIsLoading(false);
+      // Handle different response types properly
+      if (data.type === 'subscription') {
+        // For subscriptions, redirect to hosted payment page
+        if (data.short_url) {
+          console.log('Redirecting to subscription payment:', data.short_url);
+          setMessage('Subscription created! Redirecting to payment page...');
           
-          // Reset form after successful payment
           setTimeout(() => {
-            setFormData({
-              amount: '',
-              name: '',
-              email: '',
-              phone: '',
-              frequency: 'One-time'
-            });
-            setMessage('');
-          }, 5000);
-        },
-        modal: {
-          ondismiss: function() {
-            setMessage('Payment cancelled');
-            setIsLoading(false);
-          }
+            window.location.href = data.short_url;
+          }, 1500);
+        } else {
+          setMessage(`Monthly subscription created! Subscription ID: ${data.subscription_id}`);
         }
-      };
+        setIsLoading(false);
 
-      // 3. Open Razorpay form immediately when response is received
-      console.log('Opening Razorpay with options:', options);
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      } else if (data.type === 'order' || data.type === 'order_with_recurring_intent') {
+        // For regular orders, use Razorpay popup
+        const options = {
+          key: 'rzp_test_NkZWk4SLJaXiCx',
+          amount: data.amount,
+          currency: data.currency,
+          name: 'Your Organization',
+          description: formData.frequency === 'Monthly' ? 
+            `Monthly Donation - ₹${formData.amount}` : 
+            `Donation - ₹${formData.amount}`,
+          order_id: data.id,
+          prefill: {
+            name: formData.name,
+            email: formData.email,
+            contact: formData.phone
+          },
+          theme: {
+            color: '#3399cc'
+          },
+          handler: function(response) {
+            console.log('Payment successful:', response);
+            const successMessage = formData.frequency === 'Monthly' ? 
+              'Monthly donation processed successfully! We will set up recurring payments.' :
+              'Thank you for your generous donation!';
+            setMessage(successMessage);
+            setIsLoading(false);
+            
+            // Reset form after successful payment
+            setTimeout(() => {
+              setFormData({
+                amount: '',
+                name: '',
+                email: '',
+                phone: '',
+                frequency: 'One-time'
+              });
+              setMessage('');
+            }, 5000);
+          },
+          modal: {
+            ondismiss: function() {
+              setMessage('Payment cancelled');
+              setIsLoading(false);
+            }
+          }
+        };
+
+        console.log('Opening Razorpay with options:', options);
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+
+      } else {
+        throw new Error('Unexpected response type from server');
+      }
 
     } catch (error) {
       console.error('Payment initiation error:', error);
@@ -221,7 +244,11 @@ function App() {
           </button>
 
           {message && (
-            <div className={`message ${message.includes('Thank you') ? 'success' : message.includes('Error') || message.includes('cancelled') ? 'error' : 'info'}`}>
+            <div className={`message ${
+              message.includes('successful') || message.includes('created') ? 'success' : 
+              message.includes('Error') || message.includes('cancelled') ? 'error' : 
+              'info'
+            }`}>
               {message}
             </div>
           )}
