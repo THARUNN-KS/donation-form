@@ -54,7 +54,7 @@ function App() {
 
     loadRazorpay().catch(error => {
       console.error('Razorpay loading error:', error);
-      setMessage('❌ Failed to load payment gateway. Please refresh the page.');
+      setMessage('Failed to load payment gateway. Please refresh the page.');
     });
   }, []);
 
@@ -111,10 +111,51 @@ function App() {
     });
   };
 
-  const openRazorpayCheckout = async (paymentData, isMonthly = false) => {
+  // Function to create subscription after successful payment
+  const createSubscriptionAfterPayment = async (paymentResponse, donorData) => {
+    try {
+      console.log('Creating subscription after successful payment...');
+      
+      const subscriptionData = {
+        amount: donorData.amount,
+        name: donorData.name,
+        email: donorData.email,
+        phone: donorData.phone,
+        paymentId: paymentResponse.razorpay_payment_id,
+        orderId: paymentResponse.razorpay_order_id
+      };
+
+      const response = await fetch('/api/create-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(subscriptionData)
+      });
+
+      const subscriptionResult = await response.json();
+      console.log('Subscription creation response:', subscriptionResult);
+
+      if (response.ok && subscriptionResult.success) {
+        console.log('Subscription created successfully:', subscriptionResult.subscription_id);
+        return subscriptionResult;
+      } else {
+        throw new Error(subscriptionResult.message || 'Failed to create subscription');
+      }
+    } catch (error) {
+      console.error('Error creating subscription after payment:', error);
+      // Don't throw error - payment was successful, just log the subscription creation failure
+      return { error: error.message };
+    }
+  };
+
+  const openRazorpayCheckout = async (paymentData) => {
     try {
       // Wait for Razorpay to be available
       await waitForRazorpay();
+
+      const isMonthly = paymentData.isMonthly;
+      const donorData = paymentData.donorData;
 
       const options = {
         key: 'rzp_test_NkZWk4SLJaXiCx', // Your Razorpay key
@@ -122,7 +163,7 @@ function App() {
         currency: paymentData.currency,
         name: 'Your Organization',
         description: isMonthly ? 
-          `Monthly Donation - ₹${formData.amount}` : 
+          `Monthly Subscription First Payment - ₹${formData.amount}` : 
           `Donation - ₹${formData.amount}`,
         order_id: paymentData.id,
         prefill: {
@@ -133,12 +174,24 @@ function App() {
         theme: {
           color: '#3399cc'
         },
-        handler: function(response) {
+        handler: async function(response) {
           console.log('Payment successful:', response);
-          const successMessage = isMonthly ? 
-            '✅ Monthly donation processed successfully! We will set up recurring payments for you.' :
-            '✅ Thank you for your generous donation!';
-          setMessage(successMessage);
+          
+          setMessage('Payment successful! Processing...');
+          
+          if (isMonthly) {
+            // For monthly donations, create subscription after payment
+            const subscriptionResult = await createSubscriptionAfterPayment(response, donorData);
+            
+            if (subscriptionResult.error) {
+              setMessage('Payment successful! Note: Subscription setup encountered an issue. Please contact support.');
+            } else {
+              setMessage(`Payment successful! Monthly subscription activated. Subscription ID: ${subscriptionResult.subscription_id}`);
+            }
+          } else {
+            setMessage('Thank you for your generous donation!');
+          }
+          
           setIsLoading(false);
           
           // Reset form on successful payment
@@ -151,7 +204,7 @@ function App() {
               frequency: 'One-time'
             });
             setMessage('');
-          }, 5000);
+          }, 8000);
         },
         modal: {
           ondismiss: function() {
@@ -167,7 +220,7 @@ function App() {
 
     } catch (error) {
       console.error('Razorpay initialization error:', error);
-      setMessage(`❌ Payment gateway error: ${error.message}`);
+      setMessage(`Payment gateway error: ${error.message}`);
       setIsLoading(false);
     }
   };
@@ -176,16 +229,17 @@ function App() {
     if (!validateForm()) return;
 
     if (!razorpayLoaded) {
-      setMessage('❌ Payment gateway is still loading. Please wait a moment and try again.');
+      setMessage('Payment gateway is still loading. Please wait a moment and try again.');
       return;
     }
 
     setIsLoading(true);
-    setMessage('Processing your donation...');
+    setMessage('Creating payment order...');
 
     try {
       console.log('Sending payment request:', formData);
 
+      // Create order for both one-time and monthly donations
       const response = await fetch('/api/create-order', {
         method: 'POST',
         headers: {
@@ -201,32 +255,13 @@ function App() {
         throw new Error(data.message || data.error || 'Failed to process payment');
       }
 
-      // Handle different response types
-      if (data.type === 'subscription') {
-        // True subscription created
-        setMessage(`✅ Monthly subscription set up successfully! Subscription ID: ${data.subscription_id}`);
-        
-        if (data.short_url) {
-          setMessage(prev => prev + ` You can manage your subscription here: ${data.short_url}`);
-        }
-        setIsLoading(false);
-
-      } else if (data.type === 'order_with_recurring_intent') {
-        // Fallback: one-time order with monthly intent
-        console.log('Using fallback method for monthly donation');
-        await openRazorpayCheckout(data, true);
-
-      } else if (data.type === 'order') {
-        // Regular one-time donation
-        await openRazorpayCheckout(data, false);
-
-      } else {
-        throw new Error('Unexpected response type from server');
-      }
+      // Open Razorpay popup immediately for all payments
+      setMessage('Opening payment gateway...');
+      await openRazorpayCheckout(data);
 
     } catch (error) {
       console.error('Payment initiation error:', error);
-      setMessage(`❌ Error: ${error.message}`);
+      setMessage(`Error: ${error.message}`);
       setIsLoading(false);
     }
   };
@@ -239,7 +274,7 @@ function App() {
           
           {!razorpayLoaded && (
             <div className="loading-message">
-              🔄 Loading payment gateway...
+              Loading payment gateway...
             </div>
           )}
           
@@ -334,7 +369,11 @@ function App() {
           </button>
 
           {message && (
-            <div className={`message ${message.includes('✅') ? 'success' : message.includes('❌') ? 'error' : 'info'}`}>
+            <div className={`message ${
+              message.includes('successful') || message.includes('activated') ? 'success' : 
+              message.includes('Error') || message.includes('Failed') || message.includes('cancelled') ? 'error' : 
+              'info'
+            }`}>
               {message}
             </div>
           )}
@@ -342,11 +381,11 @@ function App() {
           <div className="info-text">
             <p>
               {formData.frequency === 'Monthly' 
-                ? '🔄 Monthly donations help us plan better and have greater impact.'
-                : '💝 Your one-time donation makes a difference.'
+                ? 'Monthly donations help us plan better and have greater impact.'
+                : 'Your one-time donation makes a difference.'
               }
             </p>
-            <p>🔒 Secure payment powered by Razorpay</p>
+            <p>Secure payment powered by Razorpay</p>
           </div>
         </div>
       </div>
