@@ -281,9 +281,17 @@ function App() {
 
         // Handle different response types
         if (data.type === 'subscription') {
-          setMessage(`✅ Monthly subscription set up successfully! Subscription ID: ${data.subscription_id}`);
+          // For subscriptions, redirect to Razorpay's payment page
           if (data.short_url) {
-            setMessage(prev => prev + ` You can manage your subscription here: ${data.short_url}`);
+            console.log('Redirecting to subscription payment:', data.short_url);
+            setMessage('✅ Subscription created! Redirecting to payment page...');
+            
+            // Open payment page in the same window
+            setTimeout(() => {
+              window.location.href = data.short_url;
+            }, 1500);
+          } else {
+            setMessage(`✅ Monthly subscription set up successfully! Subscription ID: ${data.subscription_id}`);
           }
           setIsLoading(false);
         } else if (data.type === 'order_with_recurring_intent') {
