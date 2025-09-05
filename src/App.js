@@ -11,51 +11,13 @@ function App() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
   // Load Razorpay script dynamically
   useEffect(() => {
-    const loadRazorpay = () => {
-      return new Promise((resolve, reject) => {
-        // Check if Razorpay is already loaded
-        if (window.Razorpay) {
-          setRazorpayLoaded(true);
-          resolve(true);
-          return;
-        }
-
-        // Check if script already exists
-        const existingScript = document.getElementById('razorpay-script');
-        if (existingScript) {
-          existingScript.onload = () => {
-            setRazorpayLoaded(true);
-            resolve(true);
-          };
-          return;
-        }
-
-        // Create and load script
-        const script = document.createElement('script');
-        script.id = 'razorpay-script';
-        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-        script.onload = () => {
-          console.log('Razorpay script loaded successfully');
-          setRazorpayLoaded(true);
-          resolve(true);
-        };
-        script.onerror = () => {
-          console.error('Failed to load Razorpay script');
-          reject(new Error('Failed to load payment gateway'));
-        };
-        
-        document.body.appendChild(script);
-      });
-    };
-
-    loadRazorpay().catch(error => {
-      console.error('Razorpay loading error:', error);
-      setMessage('❌ Failed to load payment gateway. Please refresh the page.');
-    });
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
   }, []);
 
   const handleChange = (e) => {
@@ -86,45 +48,39 @@ function App() {
     return true;
   };
 
-  const waitForRazorpay = () => {
-    return new Promise((resolve, reject) => {
-      if (window.Razorpay) {
-        resolve();
-        return;
+  const initializePayment = async () => {
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    setMessage('Processing your donation...');
+
+    try {
+      console.log('Sending payment request:', formData);
+
+      // 1. Get response from API
+      const response = await fetch('/api/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+      console.log('Payment response:', data);
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || 'Failed to process payment');
       }
 
-      let attempts = 0;
-      const maxAttempts = 10;
-      
-      const checkRazorpay = setInterval(() => {
-        attempts++;
-        console.log(`Checking for Razorpay... Attempt ${attempts}`);
-        
-        if (window.Razorpay) {
-          clearInterval(checkRazorpay);
-          resolve();
-        } else if (attempts >= maxAttempts) {
-          clearInterval(checkRazorpay);
-          reject(new Error('Razorpay failed to load'));
-        }
-      }, 500);
-    });
-  };
-
-  const openRazorpayCheckout = async (paymentData, isMonthly = false) => {
-    try {
-      // Wait for Razorpay to be available
-      await waitForRazorpay();
-
+      // 2. Send response directly to Razorpay
       const options = {
-        key: 'rzp_test_NkZWk4SLJaXiCx', // Your Razorpay key
-        amount: paymentData.amount,
-        currency: paymentData.currency,
+        key: 'rzp_test_NkZWk4SLJaXiCx',
+        amount: data.amount,
+        currency: data.currency,
         name: 'Your Organization',
-        description: isMonthly ? 
-          `Monthly Donation - ₹${formData.amount}` : 
-          `Donation - ₹${formData.amount}`,
-        order_id: paymentData.id,
+        description: `Donation - ₹${formData.amount}`,
+        order_id: data.id,
         prefill: {
           name: formData.name,
           email: formData.email,
@@ -135,13 +91,10 @@ function App() {
         },
         handler: function(response) {
           console.log('Payment successful:', response);
-          const successMessage = isMonthly ? 
-            '✅ Monthly donation processed successfully! We will set up recurring payments for you.' :
-            '✅ Thank you for your generous donation!';
-          setMessage(successMessage);
+          setMessage('Thank you for your generous donation!');
           setIsLoading(false);
           
-          // Reset form on successful payment
+          // Reset form after successful payment
           setTimeout(() => {
             setFormData({
               amount: '',
@@ -161,72 +114,14 @@ function App() {
         }
       };
 
+      // 3. Open Razorpay form immediately when response is received
       console.log('Opening Razorpay with options:', options);
       const rzp = new window.Razorpay(options);
       rzp.open();
 
     } catch (error) {
-      console.error('Razorpay initialization error:', error);
-      setMessage(`❌ Payment gateway error: ${error.message}`);
-      setIsLoading(false);
-    }
-  };
-
-  const initializePayment = async () => {
-    if (!validateForm()) return;
-
-    if (!razorpayLoaded) {
-      setMessage('❌ Payment gateway is still loading. Please wait a moment and try again.');
-      return;
-    }
-
-    setIsLoading(true);
-    setMessage('Processing your donation...');
-
-    try {
-      console.log('Sending payment request:', formData);
-
-      const response = await fetch('/api/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
-      console.log('Payment response:', data);
-
-      if (!response.ok) {
-        throw new Error(data.message || data.error || 'Failed to process payment');
-      }
-
-      // Handle different response types
-      if (data.type === 'subscription') {
-        // True subscription created
-        setMessage(`✅ Monthly subscription set up successfully! Subscription ID: ${data.subscription_id}`);
-        
-        if (data.short_url) {
-          setMessage(prev => prev + ` You can manage your subscription here: ${data.short_url}`);
-        }
-        setIsLoading(false);
-
-      } else if (data.type === 'order_with_recurring_intent') {
-        // Fallback: one-time order with monthly intent
-        console.log('Using fallback method for monthly donation');
-        await openRazorpayCheckout(data, true);
-
-      } else if (data.type === 'order') {
-        // Regular one-time donation
-        await openRazorpayCheckout(data, false);
-
-      } else {
-        throw new Error('Unexpected response type from server');
-      }
-
-    } catch (error) {
       console.error('Payment initiation error:', error);
-      setMessage(`❌ Error: ${error.message}`);
+      setMessage(`Error: ${error.message}`);
       setIsLoading(false);
     }
   };
@@ -236,12 +131,6 @@ function App() {
       <div className="donation-container">
         <div className="donation-form">
           <h2>Make a Donation</h2>
-          
-          {!razorpayLoaded && (
-            <div className="loading-message">
-              🔄 Loading payment gateway...
-            </div>
-          )}
           
           <div className="form-group">
             <label>Donation Type:</label>
@@ -323,18 +212,16 @@ function App() {
           <button 
             className="donate-button" 
             onClick={initializePayment}
-            disabled={isLoading || !razorpayLoaded}
+            disabled={isLoading}
           >
             {isLoading 
               ? 'Processing...' 
-              : !razorpayLoaded 
-                ? 'Loading...' 
-                : `Donate ₹${formData.amount || '0'} ${formData.frequency}`
+              : `Donate ₹${formData.amount || '0'} ${formData.frequency}`
             }
           </button>
 
           {message && (
-            <div className={`message ${message.includes('✅') ? 'success' : message.includes('❌') ? 'error' : 'info'}`}>
+            <div className={`message ${message.includes('Thank you') ? 'success' : message.includes('Error') || message.includes('cancelled') ? 'error' : 'info'}`}>
               {message}
             </div>
           )}
@@ -342,11 +229,11 @@ function App() {
           <div className="info-text">
             <p>
               {formData.frequency === 'Monthly' 
-                ? '🔄 Monthly donations help us plan better and have greater impact.'
-                : '💝 Your one-time donation makes a difference.'
+                ? 'Monthly donations help us plan better and have greater impact.'
+                : 'Your one-time donation makes a difference.'
               }
             </p>
-            <p>🔒 Secure payment powered by Razorpay</p>
+            <p>Secure payment powered by Razorpay</p>
           </div>
         </div>
       </div>
