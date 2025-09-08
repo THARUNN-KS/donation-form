@@ -194,14 +194,16 @@ body {
 }
 
 /* Frequency Buttons */
-.frequency-buttons {
+.frequency-buttons,
+.currency-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-top: 8px;
 }
 
-.frequency-buttons button {
+.frequency-buttons button,
+.currency-buttons button {
   padding: 16px 24px;
   border: 2px solid #e5e7eb;
   border-radius: 12px;
@@ -213,14 +215,38 @@ body {
   transition: all 0.2s ease;
 }
 
-.frequency-buttons button:hover {
+.frequency-buttons button:hover,
+.currency-buttons button:hover {
   border-color: #4285f4;
   transform: translateY(-1px);
 }
 
-.frequency-buttons button.active {
+.frequency-buttons button.active,
+.currency-buttons button.active {
   border-color: #4285f4;
   background: #4285f4;
+  color: white;
+}
+
+/* Currency-specific badges */
+.payment-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.payment-badge.razorpay {
+  background-color: #005bf2;
+  color: white;
+}
+
+.payment-badge.stripe {
+  background-color: #6772e5;
   color: white;
 }
 
@@ -288,14 +314,36 @@ body {
   font-size: 18px;
 }
 
-.stripe-notice {
-  background: linear-gradient(90deg, #667eea, #764ba2);
-  color: white;
+.payment-method-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  gap: 8px;
+}
+
+.payment-method-info img {
+  height: 24px;
+  width: auto;
+}
+
+.stripe-notice,
+.razorpay-notice {
   padding: 16px 20px;
   border-radius: 12px;
   text-align: center;
   font-weight: 500;
   margin-bottom: 24px;
+}
+
+.stripe-notice {
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  color: white;
+}
+
+.razorpay-notice {
+  background: linear-gradient(90deg, #005bf2, #0086f2);
+  color: white;
 }
 
 /* Buttons */
@@ -408,6 +456,57 @@ body {
   border-radius: 8px;
 }
 
+/* Currency Symbol Styling */
+.currency-symbol {
+  font-weight: 600;
+  font-size: 18px;
+  margin-right: 4px;
+}
+
+/* Payment Gateway Options */
+.gateway-option {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.gateway-option:hover {
+  border-color: #4285f4;
+  transform: translateY(-1px);
+}
+
+.gateway-option.selected {
+  border-color: #4285f4;
+  background-color: #f0f7ff;
+}
+
+.gateway-logo {
+  width: 80px;
+  height: auto;
+  margin-right: 16px;
+}
+
+.gateway-details {
+  flex: 1;
+}
+
+.gateway-details h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.gateway-details p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 640px) {
   body {
@@ -436,5 +535,19 @@ body {
   .amount-btn {
     padding: 14px 16px;
     font-size: 15px;
+  }
+  
+  .currency-buttons {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .gateway-option {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .gateway-logo {
+    margin-bottom: 12px;
+    margin-right: 0;
   }
 }

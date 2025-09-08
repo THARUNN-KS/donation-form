@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+// Near the top of your App.js file
+const API_BASE_URL = process.env.NODE_ENV === 'development' 
+  ? 'http://localhost:5001' 
+  : 'https://donation-form-j142.vercel.app';
 
 function App() {
   const [formData, setFormData] = useState({
@@ -7,17 +11,27 @@ function App() {
     name: '',
     email: '',
     phone: '',
-    frequency: 'One-time'
+    frequency: 'One-time',
+    currency: 'INR'  // Default currency is INR
   });
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [stripeLoaded, setStripeLoaded] = useState(false);
 
-  // Load Razorpay script dynamically
+  // Load payment gateway scripts dynamically
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    document.body.appendChild(script);
+    // Load Razorpay script
+    const razorpayScript = document.createElement('script');
+    razorpayScript.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    razorpayScript.async = true;
+    document.body.appendChild(razorpayScript);
+
+    // Load Stripe script
+    const stripeScript = document.createElement('script');
+    stripeScript.src = 'https://js.stripe.com/v3/';
+    stripeScript.async = true;
+    stripeScript.onload = () => setStripeLoaded(true);
+    document.body.appendChild(stripeScript);
   }, []);
 
   const handleChange = (e) => {
@@ -54,10 +68,22 @@ function App() {
     setIsLoading(true);
     setMessage('Processing your donation...');
 
-    try {
-      console.log('Sending payment request:', formData);
+    // Determine which payment gateway to use based on currency
+    if (formData.currency === 'INR') {
+      await initializeRazorpayPayment();
+    } else if (formData.currency === 'USD') {
+      await initializeStripePayment();
+    } else {
+      setMessage('Unsupported currency');
+      setIsLoading(false);
+    }
+  };
 
-      const response = await fetch('https://donation-form-j142.vercel.app/api/create-order', {
+  const initializeRazorpayPayment = async () => {
+    try {
+      console.log('Sending Razorpay payment request:', formData);
+
+      const response = await fetch(`${API_BASE_URL}/api/create-order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -66,7 +92,7 @@ function App() {
       });
 
       const data = await response.json();
-      console.log('Payment response:', data);
+      console.log('Razorpay payment response:', data);
 
       if (!response.ok) {
         throw new Error(data.message || data.error || 'Failed to process payment');
@@ -78,8 +104,8 @@ function App() {
         const subscriptionOptions = {
           key: 'rzp_test_4nEyceM4GUQmPk',
           subscription_id: data.subscription_id,
-          amount: data.amount,        // ← Added amount
-          currency: data.currency,    // ← Added currency  
+          amount: data.amount,
+          currency: data.currency,
 
           name: 'Your Organization',
           description: `Monthly Donation - ₹${formData.amount}`,
@@ -97,16 +123,7 @@ function App() {
             setIsLoading(false);
             
             // Reset form after successful payment
-            setTimeout(() => {
-              setFormData({
-                amount: '',
-                name: '',
-                email: '',
-                phone: '',
-                frequency: 'One-time'
-              });
-              setMessage('');
-            }, 5000);
+            resetForm();
           },
           modal: {
             ondismiss: function() {
@@ -148,16 +165,7 @@ function App() {
             setIsLoading(false);
             
             // Reset form after successful payment
-            setTimeout(() => {
-              setFormData({
-                amount: '',
-                name: '',
-                email: '',
-                phone: '',
-                frequency: 'One-time'
-              });
-              setMessage('');
-            }, 5000);
+            resetForm();
           },
           modal: {
             ondismiss: function() {
@@ -176,10 +184,83 @@ function App() {
       }
 
     } catch (error) {
-      console.error('Payment initiation error:', error);
+      console.error('Razorpay payment initiation error:', error);
       setMessage(`Error: ${error.message}`);
       setIsLoading(false);
     }
+  };
+
+  const initializeStripePayment = async () => {
+    if (!stripeLoaded) {
+      setMessage('Stripe is still loading. Please try again in a moment.');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      console.log('Sending Stripe payment request:', formData);
+
+      const response = await fetch(`${API_BASE_URL}/api/create-stripe-payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+      console.log('Stripe payment response:', data);
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || 'Failed to process payment');
+      }
+
+      // Initialize Stripe
+      const stripe = window.Stripe('pk_test_51HvTSXFpsHIe6pnDbw5m9BPMOsB2jyH8daLjSU5Bnh58CaRtpTpgCMebRcW06Ccy9rGYP5RM2l1Toz8u3JeWGoGR00WpEFaF5M');
+
+      if (data.type === 'checkout') {
+        // Redirect to Stripe Checkout
+        stripe.redirectToCheckout({
+          sessionId: data.id
+        }).then(function (result) {
+          if (result.error) {
+            setMessage(`Error: ${result.error.message}`);
+            setIsLoading(false);
+          }
+        });
+      } else if (data.type === 'subscription') {
+        // Handle subscription redirect
+        stripe.redirectToCheckout({
+          sessionId: data.id
+        }).then(function (result) {
+          if (result.error) {
+            setMessage(`Error: ${result.error.message}`);
+            setIsLoading(false);
+          }
+        });
+      } else {
+        throw new Error('Unexpected response type from server');
+      }
+
+    } catch (error) {
+      console.error('Stripe payment initiation error:', error);
+      setMessage(`Error: ${error.message}`);
+      setIsLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setTimeout(() => {
+      setFormData({
+        amount: '',
+        name: '',
+        email: '',
+        phone: '',
+        frequency: 'One-time',
+        currency: 'INR'
+      });
+      setMessage('');
+    }, 5000);
   };
 
   return (
@@ -209,7 +290,27 @@ function App() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="amount">Amount (₹) *:</label>
+            <label>Currency:</label>
+            <div className="currency-buttons">
+              <button
+                type="button"
+                className={formData.currency === 'INR' ? 'active' : ''}
+                onClick={() => setFormData(prev => ({ ...prev, currency: 'INR' }))}
+              >
+                INR (₹)
+              </button>
+              <button
+                type="button"
+                className={formData.currency === 'USD' ? 'active' : ''}
+                onClick={() => setFormData(prev => ({ ...prev, currency: 'USD' }))}
+              >
+                USD ($)
+              </button>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="amount">Amount ({formData.currency === 'INR' ? '₹' : '$'}) *:</label>
             <input
               type="number"
               id="amount"
@@ -272,7 +373,7 @@ function App() {
           >
             {isLoading 
               ? 'Processing...' 
-              : `Donate ₹${formData.amount || '0'} ${formData.frequency}`
+              : `Donate ${formData.currency === 'INR' ? '₹' : '$'}${formData.amount || '0'} ${formData.frequency}`
             }
           </button>
 
@@ -293,7 +394,7 @@ function App() {
                 : 'Your one-time donation makes a difference.'
               }
             </p>
-            <p>Secure payment powered by Razorpay</p>
+            <p>Secure payment powered by {formData.currency === 'INR' ? 'Razorpay' : 'Stripe'}</p>
           </div>
         </div>
       </div>
