@@ -86,28 +86,6 @@ const Star = ({ className }) => (
   </svg>
 );
 
-// Trust badges with premium design
-const TRUST_BADGES = [
-  {
-    icon: ShieldCheck,
-    title: "Bank-Level Security",
-    description: "256-bit SSL encryption",
-    gradient: "from-emerald-500 to-teal-600"
-  },
-  {
-    icon: Shield,
-    title: "Tax Benefits",
-    description: "80G tax exemption",
-    gradient: "from-blue-500 to-indigo-600"
-  },
-  {
-    icon: Building,
-    title: "Verified NGO",
-    description: "Government registered",
-    gradient: "from-purple-500 to-pink-600"
-  }
-];
-
 // Payment Method enumeration
 const PaymentMethod = {
   RAZORPAY: 'razorpay',
@@ -130,8 +108,8 @@ const AVAILABLE_CURRENCIES = [
 
 // Default donation amounts
 const DEFAULT_DONATION_AMOUNTS = {
-  INR: [2000, 5000, 10000],
-  USD: [25, 50, 100]
+  INR: [42000, 12000, 2000],
+  USD: [500, 300, 100]
 };
 
 // Country codes for phone validation
@@ -175,6 +153,25 @@ const DEFAULT_EXCHANGE_RATES = {
   'CNY': 7.24,
   'SEK': 10.87
 };
+
+// Trust badges with premium design
+const TRUST_BADGES = [
+  {
+    icon: ShieldCheck,
+    title: "Bank-Level Security",
+    description: "256-bit SSL encryption"
+  },
+  {
+    icon: Shield,
+    title: "Tax Benefits",
+    description: "80G tax exemption"
+  },
+  {
+    icon: Building,
+    title: "Verified NGO",
+    description: "Government registered"
+  }
+];
 
 // Utility functions
 const getCurrencySymbol = (currencyCode) => {
@@ -237,97 +234,8 @@ const detectUserLocation = async () => {
   }
 };
 
-// TrustBadge component
-const TrustBadge = ({ badge, index }) => (
-  <div className="bg-white/70 backdrop-blur-md rounded-2xl p-3 md:p-5 text-center flex flex-col items-center group hover:bg-white/90 transition-all duration-200 shadow-lg hover:shadow-xl border border-white/30">
-    <div className={`w-8 h-8 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br ${badge.gradient} flex items-center justify-center mb-2 md:mb-3 shadow-lg group-hover:scale-110 transition-transform duration-200`}>
-      <badge.icon className="h-4 w-4 md:h-6 md:w-6 text-white" />
-    </div>
-    <h4 className="text-xs md:text-sm font-bold text-slate-700 group-hover:text-slate-900 transition-colors">
-      {badge.title}
-    </h4>
-    <p className="hidden md:block text-xs text-slate-500 mt-1 group-hover:text-slate-600 transition-colors">
-      {badge.description}
-    </p>
-  </div>
-);
-
-// FormField component
-const FormField = ({ label, required, children, errorMessage }) => (
-  <div className="mb-4">
-    <label className="block text-sm font-semibold text-slate-700 mb-2">
-      {label} {required && <span className="text-rose-500">*</span>}
-    </label>
-    {children}
-    {errorMessage && (
-      <p className="text-xs text-rose-500 mt-2 font-medium">
-        {errorMessage}
-      </p>
-    )}
-  </div>
-);
-
-// TextInput component
-const TextInput = ({ id, value, onChange, placeholder, required = false, className = "", maxLength, type = "text", onBlur }) => (
-  <input
-    id={id}
-    type={type}
-    value={value}
-    onChange={onChange}
-    onBlur={onBlur}
-    placeholder={placeholder}
-    maxLength={maxLength}
-    className={`w-full px-4 md:px-5 py-3 md:py-4 rounded-2xl border-2 border-gray-200/50 bg-white/70 backdrop-blur-md focus:outline-none focus:ring-4 focus:ring-blue-200/50 focus:border-blue-300 transition-all duration-200 text-base md:text-lg shadow-lg hover:shadow-xl ${className}`}
-    required={required}
-  />
-);
-
-// AmountButton component
-const AmountButton = ({ amount, index, isSelected, currencySymbol, onSelect }) => (
-  <button
-    type="button"
-    onClick={() => onSelect(amount)}
-    className={`relative py-3 md:py-4 px-3 md:px-4 rounded-2xl transition-all duration-200 ${
-      isSelected
-        ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-xl shadow-yellow-200/50 border-2 border-yellow-300'
-        : 'bg-white/70 backdrop-blur-md text-slate-700 hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100 border-2 border-gray-200/50 hover:border-gray-300/50 shadow-lg hover:shadow-xl'
-    } focus:outline-none focus:ring-4 focus:ring-yellow-300/50`}
-  >
-    {index === 1 && (
-      <div className="absolute -top-2 left-0 right-0 flex justify-center">
-        <span className="bg-gradient-to-r from-emerald-500 to-teal-600 text-xs font-bold px-3 py-0.5 rounded-full text-white shadow-lg flex items-center gap-1">
-          <Star className="h-2.5 w-2.5" />
-          Popular
-        </span>
-      </div>
-    )}
-    <div className="text-base md:text-lg lg:text-xl font-bold">
-      {currencySymbol}{Math.round(Number(amount)).toLocaleString()}
-    </div>
-  </button>
-);
-
 // Main App component
 function App() {
-  const [citizenship, setCitizenship] = useState('');
-  const [currency, setCurrency] = useState('USD');
-  const [amount, setAmount] = useState('');
-  const [details, setDetails] = useState({
-    name: '',
-    mobile: '',
-    email: '',
-    address: '',
-    city: '',
-    state: '',
-    pin: '',
-    country: 'India',
-    pan: '',
-    anonymous: false,
-  });
-
-  // Preset amounts
-  const presets = currency === 'USD' ? [500, 300, 100] : [42000, 12000, 2000];
-
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   
@@ -1031,12 +939,12 @@ function App() {
   }, [formData.amount, formData.selectedCurrency]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
+    <div className="min-h-screen bg-gray-100" style={{ fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif' }}>
       {/* Main Donation Button */}
       {!isModalOpen && (
         <div className="flex items-center justify-center min-h-screen p-4">
           <div className="text-center">
-            <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-6">
+            <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-6">
               Support Our Cause
             </h1>
             <p className="text-gray-600 mb-8 max-w-md">
@@ -1056,573 +964,605 @@ function App() {
 
       {/* Modal Overlay */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[95vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex justify-between items-center p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-800">Make a Donation</h2>
+              {currentStep > 1 && (
+                <button
+                  onClick={handleBack}
+                  className="flex items-center text-blue-600 hover:text-blue-700 transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  {currentStep === 2 ? "Back to Citizenship" : currentStep === 3 ? (formData.isIndian ? "Back to Currency" : "Back to Citizenship") : "Back to Campaign"}
+                </button>
+              )}
+              
+              {currentStep === 1 && (
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex items-center text-blue-600 hover:text-blue-700 transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Campaign
+                </button>
+              )}
+
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors ml-auto"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Premium Background Elements */}
-            <div className="relative overflow-hidden">
-              <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-yellow-200/20 to-orange-200/20 rounded-full blur-3xl"></div>
-              <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-blue-200/20 to-purple-200/20 rounded-full blur-3xl"></div>
-
-              <div className="relative p-6 md:p-8">
-                {/* Step Content */}
-                {/* Step 1: Citizenship Selection */}
-                {currentStep === 1 && (
-                  <div className="max-w-md mx-auto">
-                    <div className="text-center mb-8">
-                      <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <Globe className="h-7 w-7 text-white" />
+            <div className="p-6">
+              {/* Step 1: Citizenship Selection */}
+              {currentStep === 1 && (
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-orange-400 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <Globe className="h-8 w-8 text-white" />
+                  </div>
+                  
+                  <h2 className="text-2xl font-bold text-gray-700 mb-2">
+                    Choose Your Citizenship
+                  </h2>
+                  <p className="text-gray-500 text-sm mb-8">
+                    This helps us provide the best payment options for you
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <button
+                      onClick={() => handleCitizenshipSelect(true)}
+                      className="w-full flex items-center p-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all duration-200 group"
+                    >
+                      <div className="text-2xl mr-4">🇮🇳</div>
+                      <div className="text-left flex-1">
+                        <h3 className="font-semibold text-gray-800 text-lg">Indian Citizen</h3>
+                        <p className="text-sm text-gray-500 mt-1">Indian passport holder or resident</p>
+                        <p className="text-xs text-green-600 mt-1 font-medium">✓ Tax benefits available</p>
                       </div>
-                      <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
-                        Choose Your Citizenship
-                      </h2>
-                      <p className="text-gray-500 text-sm">This helps us provide the best payment options for you</p>
-                    </div>
+                    </button>
                     
-                    <div className="space-y-3">
-                      <button
-                        onClick={() => handleCitizenshipSelect(true)}
-                        className="w-full flex items-center p-4 md:p-5 rounded-2xl border border-slate-200/50 bg-white/50 backdrop-blur-md hover:border-yellow-300 hover:bg-gradient-to-r hover:from-yellow-50 hover:to-orange-50 transition-all duration-200 group shadow-lg hover:shadow-xl"
-                      >
-                        <div className="text-3xl mr-4">🇮🇳</div>
-                        <div className="text-left flex-1">
-                          <h3 className="font-semibold text-slate-800 group-hover:text-yellow-600 transition-colors text-base md:text-lg">Indian Citizen</h3>
-                          <p className="text-xs md:text-sm text-slate-500 mt-1">Indian passport holder or resident</p>
-                          <p className="text-xs text-emerald-600 mt-1 font-medium">✓ Tax benefits available</p>
+                    <button
+                      onClick={() => handleCitizenshipSelect(false)}
+                      className="w-full flex items-center p-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all duration-200 group"
+                    >
+                      <div className="text-2xl mr-4">🌎</div>
+                      <div className="text-left flex-1">
+                        <h3 className="font-semibold text-gray-800 text-lg">Foreign Citizen</h3>
+                        <p className="text-sm text-gray-500 mt-1">Non-Indian passport holder</p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Currency Selection */}
+              {currentStep === 2 && (
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-orange-400 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <CreditCard className="h-8 w-8 text-white" />
+                  </div>
+                  
+                  <h2 className="text-2xl font-bold text-gray-700 mb-8">
+                    Choose Your Donation Currency
+                  </h2>
+                  
+                  <div className="space-y-4">
+                    <button
+                      onClick={() => handlePaymentMethodSelect(PaymentMethod.RAZORPAY)}
+                      className="w-full flex items-center p-4 rounded-xl border border-gray-200 hover:bg-orange-50 transition-all duration-200 group"
+                    >
+                      <div className="w-12 h-12 bg-orange-400 rounded-xl flex items-center justify-center mr-4">
+                        <span className="text-white font-bold text-lg">₹</span>
+                      </div>
+                      <div className="text-left flex-1">
+                        <h3 className="font-semibold text-gray-800 text-lg">Donate in INR</h3>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => handlePaymentMethodSelect(PaymentMethod.STRIPE)}
+                      className="w-full flex items-center p-4 rounded-xl border border-gray-200 hover:bg-orange-50 transition-all duration-200 group"
+                    >
+                      <div className="w-12 h-12 bg-orange-400 rounded-xl flex items-center justify-center mr-4">
+                        <Globe className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="text-left flex-1">
+                        <h3 className="font-semibold text-gray-800 text-lg">Donate in Other Currencies</h3>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Donation Form */}
+              {currentStep === 3 && (
+                <div>
+                  {/* Payment Method Header */}
+                  <div className="bg-gradient-to-r from-orange-400 to-orange-500 text-white p-4 rounded-2xl mb-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mr-3">
+                          <span className="font-bold">
+                            {formData.paymentMethod === PaymentMethod.RAZORPAY ? '₹' : getCurrencySymbol(formData.selectedCurrency)}
+                          </span>
                         </div>
-                      </button>
-                      
-                      <button
-                        onClick={() => handleCitizenshipSelect(false)}
-                        className="w-full flex items-center p-4 md:p-5 rounded-2xl border border-slate-200/50 bg-white/50 backdrop-blur-md hover:border-blue-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 group shadow-lg hover:shadow-xl"
-                      >
-                        <div className="text-3xl mr-4">🌎</div>
-                        <div className="text-left flex-1">
-                          <h3 className="font-semibold text-slate-800 group-hover:text-blue-600 transition-colors text-base md:text-lg">Foreign Citizen</h3>
-                          <p className="text-xs md:text-sm text-slate-500 mt-1">Non-Indian passport holder</p>
+                        <div>
+                          <p className="font-bold text-sm">
+                            {formData.isIndian 
+                              ? (formData.paymentMethod === PaymentMethod.RAZORPAY 
+                                ? 'Indian Citizen - INR Payment' 
+                                : 'Indian Citizen - International Payment')
+                              : 'Foreign Citizen'}
+                          </p>
+                          <p className="text-xs text-white text-opacity-80 mt-1">
+                            {formData.paymentMethod === PaymentMethod.RAZORPAY 
+                              ? 'Secure payment via Razorpay in INR' 
+                              : `International payment via Stripe in ${formData.selectedCurrency}`}
+                          </p>
                         </div>
-                      </button>
+                      </div>
+                      {formData.isIndian && (
+                        <button 
+                          onClick={() => setCurrentStep(2)}
+                          className="text-xs text-white text-opacity-80 hover:text-white bg-white bg-opacity-10 px-3 py-1 rounded-full border border-white border-opacity-20 hover:bg-opacity-20 transition-all duration-200"
+                        >
+                          Change
+                        </button>
+                      )}
                     </div>
                   </div>
-                )}
 
-                {/* Step 2: Payment Method Selection */}
-                {currentStep === 2 && (
-                  <div className="max-w-md mx-auto">
-                    <div className="text-center mb-8">
-                      <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <CreditCard className="h-7 w-7 text-white" />
+                  {/* Currency Selector - Only for Stripe */}
+                  {formData.paymentMethod === PaymentMethod.STRIPE && (
+                    <div className="mb-6">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Currency <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative dropdown-container currency-dropdown-container">
+                        <button
+                          type="button"
+                          onClick={toggleCurrencyDropdown}
+                          className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-400 transition-all duration-200"
+                        >
+                          <span className="flex items-center">
+                            <span className="mr-2 text-lg">{currencySymbol}</span>
+                            <span className="font-semibold text-gray-700">{formData.selectedCurrency}</span>
+                            <span className="ml-2 text-gray-500 text-sm">- {AVAILABLE_CURRENCIES.find(c => c.code === formData.selectedCurrency)?.name}</span>
+                          </span>
+                          <ChevronDown className="h-4 w-4 text-gray-400" />
+                        </button>
+                        
+                        {uiState.showCurrencyDropdown && (
+                          <div className="absolute z-10 mt-2 w-full bg-white rounded-xl shadow-lg border border-gray-200 max-h-64 overflow-y-auto">
+                            <div className="p-2 border-b border-gray-100">
+                              <input
+                                type="text"
+                                value={uiState.currencySearchQuery}
+                                onChange={(e) => setUiState(prev => ({ ...prev, currencySearchQuery: e.target.value }))}
+                                placeholder="Search currency..."
+                                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-blue-400"
+                              />
+                            </div>
+                            <div className="py-1">
+                              {filteredCurrencies.map((currency) => (
+                                <button
+                                  key={currency.code}
+                                  type="button"
+                                  onClick={() => handleCurrencySelect(currency.code)}
+                                  className="flex items-center w-full px-4 py-3 text-left text-sm hover:bg-gray-50 transition-all duration-200"
+                                >
+                                  <span className="mr-3 text-lg">{currency.symbol}</span>
+                                  <span className="font-medium text-gray-700">{currency.code}</span>
+                                  <span className="ml-2 text-gray-500">- {currency.name}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
-                        Choose Your Donation Currency
+                    </div>
+                  )}
+
+                  {/* Amount Selection */}
+                  <div className="mb-6">
+                    <div className="text-center mb-4">
+                      <h2 className="text-xl font-bold text-gray-700 mb-2">
+                        Choose Your Donation Amount
                       </h2>
+                      <p className="text-gray-500 text-sm">Every contribution makes a meaningful difference</p>
                     </div>
                     
-                    <div className="space-y-3">
-                      <button
-                        onClick={() => handlePaymentMethodSelect(PaymentMethod.RAZORPAY)}
-                        className="w-full flex items-center p-4 md:p-5 rounded-2xl border border-slate-200/50 bg-white/50 backdrop-blur-md hover:border-indigo-300 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-200 group shadow-lg hover:shadow-xl"
-                      >
-                        <div className="mr-4 flex-shrink-0">
-                          <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                            <span className="text-white font-bold text-lg">₹</span>
-                          </div>
-                        </div>
-                        <div className="text-left flex-1">
-                          <h3 className="font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors text-base md:text-lg">Donate in INR</h3>
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() => handlePaymentMethodSelect(PaymentMethod.STRIPE)}
-                        className="w-full flex items-center p-4 md:p-5 rounded-2xl border border-slate-200/50 bg-white/50 backdrop-blur-md hover:border-emerald-300 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 transition-all duration-200 group shadow-lg hover:shadow-xl"
-                      >
-                        <div className="mr-4 flex-shrink-0">
-                          <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg">
-                            <span className="text-white font-bold text-lg">$</span>
-                          </div>
-                        </div>
-                        <div className="text-left flex-1">
-                          <h3 className="font-semibold text-slate-800 group-hover:text-emerald-600 transition-colors text-base md:text-lg">Donate in Other Currencies</h3>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 3: Donation Details */}
-                {currentStep === 3 && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-                    {/* Form Column */}
-                    <div className="space-y-6">
-                      {/* Payment Method Indicator */}
-                      <div className={`${
-                        formData.paymentMethod === PaymentMethod.RAZORPAY 
-                          ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600' 
-                          : 'bg-gradient-to-r from-emerald-500 via-teal-600 to-cyan-600'
-                      } px-6 py-4 text-white rounded-2xl`}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <div className="h-10 w-10 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mr-3 shadow-lg">
-                              <span className="text-white font-bold text-lg">
-                                {formData.paymentMethod === PaymentMethod.RAZORPAY ? '₹' : getCurrencySymbol(formData.selectedCurrency)}
+                    {/* Amount buttons */}
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      {predefinedAmounts.map((amount, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => handleAmountSelect(amount)}
+                          className={`relative py-4 px-3 rounded-xl transition-all duration-200 ${
+                            Math.round(Number(formData.localAmount)) === Math.round(Number(amount)) && !uiState.isCustomAmount
+                              ? 'bg-gradient-to-br from-orange-400 to-orange-500 text-white shadow-lg'
+                              : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
+                          } focus:outline-none`}
+                        >
+                          {index === 1 && (
+                            <div className="absolute -top-1 left-0 right-0 flex justify-center">
+                              <span className="bg-green-500 text-xs font-bold px-2 py-0.5 rounded-full text-white flex items-center gap-1">
+                                <Star className="h-2 w-2" />
+                                Popular
                               </span>
                             </div>
-                            <div>
-                              <p className="font-bold text-sm md:text-lg">
-                                {formData.isIndian 
-                                  ? (formData.paymentMethod === PaymentMethod.RAZORPAY 
-                                    ? 'Indian Citizen - INR Payment' 
-                                    : 'Indian Citizen - International Payment')
-                                  : 'Foreign Citizen'}
-                              </p>
-                              <p className="text-xs md:text-sm text-white/80 mt-1">
-                                {formData.paymentMethod === PaymentMethod.RAZORPAY 
-                                  ? 'Secure payment via Razorpay in INR' 
-                                  : `International payment via Stripe in ${formData.selectedCurrency}`}
-                              </p>
-                            </div>
+                          )}
+                          <div className="text-lg font-bold">
+                            {currencySymbol}{Math.round(Number(amount)).toLocaleString()}
                           </div>
-                          {formData.isIndian && (
-                            <button 
-                              onClick={() => setCurrentStep(2)}
-                              className="text-xs md:text-sm text-white/80 hover:text-white bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 hover:bg-white/20 transition-all duration-200"
-                            >
-                              Change
-                            </button>
+                        </button>
+                      ))}
+                    </div>
+                    
+                    {/* Custom Amount Input */}
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={formData.customAmount}
+                        onChange={(e) => handleCustomAmount(e.target.value)}
+                        placeholder="Enter custom amount"
+                        min="1"
+                        step="1"
+                        className={`w-full pl-12 pr-16 py-3 rounded-xl border-2 transition-all duration-200 focus:outline-none ${
+                          uiState.isCustomAmount 
+                            ? 'border-orange-300 bg-orange-50' 
+                            : 'border-gray-200 focus:border-blue-400'
+                        }`}
+                      />
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <span className="text-gray-500 font-bold">{currencySymbol}</span>
+                      </div>
+                      <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                        <span className="text-gray-400 text-sm">{formData.selectedCurrency}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Personal Details */}
+                  <div className="space-y-4 mb-6">
+                    <div className="text-center mb-4">
+                      <h2 className="text-xl font-bold text-gray-700 mb-2">
+                        Your Details
+                      </h2>
+                      <p className="text-gray-500 text-sm">We'll use this information for your donation receipt</p>
+                    </div>
+
+                    {/* Name */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Full Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) => handleFormFieldChange('name', e.target.value)}
+                        placeholder="Enter your full name"
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-400 transition-all duration-200"
+                        required
+                      />
+                    </div>
+                    
+                    {/* Phone Number */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Mobile Number <span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex space-x-2">
+                        {/* Country Code Dropdown */}
+                        <div className="relative country-code-dropdown-container dropdown-container w-20 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={toggleCountryCodeDropdown}
+                            className="w-full h-12 flex items-center justify-center px-2 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-400 transition-all duration-200"
+                          >
+                            <span className="text-xs font-semibold truncate">{formData.countryCode}</span>
+                          </button>
+                          
+                          {uiState.showCountryCodeDropdown && (
+                            <div className="absolute z-30 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 max-h-48 overflow-y-auto left-0">
+                              <div className="p-2 border-b border-gray-100">
+                                <input
+                                  type="text"
+                                  value={uiState.countryCodeSearchQuery}
+                                  onChange={(e) => setUiState(prev => ({ ...prev, countryCodeSearchQuery: e.target.value }))}
+                                  placeholder="Search country..."
+                                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-blue-400"
+                                />
+                              </div>
+                              <div className="py-1">
+                                {filteredCountryCodes.map((countryCode) => (
+                                  <button
+                                    key={countryCode.code + countryCode.country}
+                                    type="button"
+                                    onClick={() => selectCountryCode(countryCode)}
+                                    className="flex items-center w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-all duration-200"
+                                  >
+                                    <span className="mr-2 text-sm">{countryCode.flag}</span>
+                                    <span className="truncate text-xs text-gray-600">{countryCode.country}</span>
+                                    <span className="ml-auto font-semibold text-gray-800 text-xs">{countryCode.code}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Phone Input */}
+                        <div className="flex-1 min-w-0">
+                          <input
+                            type="tel"
+                            value={formData.phone}
+                            onChange={handlePhoneChange}
+                            placeholder="Enter your mobile number"
+                            className={`w-full h-12 px-4 rounded-xl border-2 focus:outline-none transition-all duration-200 ${
+                              hasTouchedPhone && phoneError
+                                ? 'border-red-300 focus:border-red-400'
+                                : 'border-gray-200 focus:border-blue-400'
+                            }`}
+                            required
+                          />
+                        </div>
+                      </div>
+                      {hasTouchedPhone && phoneError && (
+                        <p className="text-xs text-red-500 mt-1">{phoneError}</p>
+                      )}
+                    </div>
+                    
+                    {/* Email */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Email Address <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={handleEmailChange}
+                        onBlur={handleEmailBlur}
+                        placeholder="Enter your email address"
+                        className={`w-full px-4 py-3 rounded-xl border-2 focus:outline-none transition-all duration-200 ${
+                          hasEmailTouched && emailError
+                            ? 'border-red-300 focus:border-red-400'
+                            : 'border-gray-200 focus:border-blue-400'
+                        }`}
+                        required
+                      />
+                      {hasEmailTouched && emailError && (
+                        <p className="text-xs text-red-500 mt-1">{emailError}</p>
+                      )}
+                    </div>
+
+                    {/* Address */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Address <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        value={formData.address}
+                        onChange={(e) => handleFormFieldChange('address', e.target.value)}
+                        placeholder="Enter your street address"
+                        rows={2}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-400 transition-all duration-200 resize-none"
+                        required
+                      />
+                    </div>
+                    
+                    {/* City */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        City <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.city}
+                        onChange={(e) => handleFormFieldChange('city', e.target.value)}
+                        placeholder="Enter your city"
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-400 transition-all duration-200"
+                        required
+                      />
+                    </div>
+                    
+                    {/* State */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        State <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.state}
+                        onChange={(e) => handleFormFieldChange('state', e.target.value)}
+                        placeholder="Enter your state"
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-400 transition-all duration-200"
+                        required
+                      />
+                    </div>
+                    
+                    {/* Pincode */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        {formData.country === "India" ? "Pin Code" : "Zip Code"} <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.pincode}
+                        onChange={handlePincodeChange}
+                        placeholder={formData.country === "India" ? "eg : 110001" : "eg : 10001"}
+                        maxLength={formData.country === "India" ? 6 : 10}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-400 transition-all duration-200"
+                        required
+                      />
+                    </div>
+
+                    {/* PAN Number (Only for Razorpay) */}
+                    {formData.paymentMethod === PaymentMethod.RAZORPAY && (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          PAN Number (If you want to avail 80G tax exemption, please provide PAN )
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.panNumber}
+                          placeholder="ENTER PAN NUMBER (E.G., ABCTY1234D)"
+                          onChange={handlePanNumberChange}
+                          maxLength={10}
+                          className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-400 transition-all duration-200 uppercase placeholder-gray-400"
+                        />
+                      </div>
+                    )}
+
+                    {/* Country Dropdown (For international) */}
+                    {formData.paymentMethod !== PaymentMethod.RAZORPAY && (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Country <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative dropdown-container country-dropdown-container">
+                          <button
+                            type="button"
+                            onClick={toggleCountryDropdown}
+                            className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-400 transition-all duration-200"
+                          >
+                            <span className="flex items-center">
+                              <span className="mr-3 text-lg">
+                                {COUNTRIES.find(c => c.name === formData.country)?.flag || '🌎'}
+                              </span>
+                              <span className="font-semibold text-gray-700">{formData.country}</span>
+                            </span>
+                            <ChevronDown className="h-4 w-4 text-gray-400" />
+                          </button>
+                          
+                          {uiState.showCountryDropdown && (
+                            <div className="absolute z-10 mt-2 w-full bg-white rounded-xl shadow-lg border border-gray-200 max-h-48 overflow-y-auto">
+                              <div className="p-2 border-b border-gray-100">
+                                <input
+                                  type="text"
+                                  value={uiState.countrySearchQuery}
+                                  onChange={(e) => setUiState(prev => ({ ...prev, countrySearchQuery: e.target.value }))}
+                                  placeholder="Search country..."
+                                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-blue-400"
+                                />
+                              </div>
+                              <div className="py-1">
+                                {filteredCountries.map((country) => (
+                                  <button
+                                    key={country.code}
+                                    type="button"
+                                    onClick={() => selectCountry(country)}
+                                    className="flex items-center w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-all duration-200"
+                                  >
+                                    <span className="mr-3 text-lg">{country.flag}</span>
+                                    <span className="text-gray-700 font-medium">{country.name}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
                           )}
                         </div>
                       </div>
+                    )}
 
-                      {/* Currency Selector - Only for Stripe */}
-                      {formData.paymentMethod === PaymentMethod.STRIPE && (
-                        <div>
-                          <label className="block text-sm font-semibold text-slate-700 mb-2">
-                            Currency <span className="text-rose-500">*</span>
-                          </label>
-                          <div className="relative dropdown-container currency-dropdown-container">
-                            <button
-                              type="button"
-                              onClick={toggleCurrencyDropdown}
-                              className="w-full flex items-center justify-between px-4 md:px-5 py-3 md:py-4 rounded-2xl border-2 border-gray-200/50 bg-white/70 backdrop-blur-md focus:outline-none focus:ring-4 focus:ring-blue-200/50 transition-all duration-200 text-base md:text-lg shadow-lg hover:shadow-xl"
-                            >
-                              <span className="flex items-center">
-                                <span className="mr-2 text-xl">{currencySymbol}</span>
-                                <span className="font-semibold text-slate-700">{formData.selectedCurrency}</span>
-                                <span className="ml-2 text-gray-500">- {AVAILABLE_CURRENCIES.find(c => c.code === formData.selectedCurrency)?.name}</span>
-                              </span>
-                              <ChevronDown className="h-5 w-5 text-slate-400" />
-                            </button>
-                            
-                            {uiState.showCurrencyDropdown && (
-                              <div className="absolute z-10 mt-2 w-full bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 max-h-64 overflow-y-auto">
-                                <div className="p-2 sticky top-0 bg-white/95 backdrop-blur-xl border-b border-gray-100 z-10">
-                                  <input
-                                    type="text"
-                                    value={uiState.currencySearchQuery}
-                                    onChange={(e) => setUiState(prev => ({ ...prev, currencySearchQuery: e.target.value }))}
-                                    placeholder="Search currency..."
-                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
-                                  />
-                                </div>
-                                <div className="py-2 overflow-y-auto">
-                                  {filteredCurrencies.map((currency) => (
-                                    <button
-                                      key={currency.code}
-                                      type="button"
-                                      onClick={() => handleCurrencySelect(currency.code)}
-                                      className="flex items-center w-full px-4 py-3 text-left text-sm hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 group"
-                                    >
-                                      <span className="mr-3 text-lg">{currency.symbol}</span>
-                                      <span className="font-medium text-slate-700 group-hover:text-blue-600">{currency.code}</span>
-                                      <span className="ml-2 text-gray-500">- {currency.name}</span>
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
+                    {/* Anonymous Donation Checkbox */}
+                    <div className="mt-4">
+                      <label className="flex items-center cursor-pointer">
+                        <div className="relative">
+                          <input 
+                            type="checkbox" 
+                            checked={formData.isAnonymous}
+                            onChange={(e) => handleAnonymousToggle(e.target.checked)}
+                            className="sr-only"
+                          />
+                          <div className={`w-4 h-4 rounded border-2 transition-all duration-200 ${
+                            formData.isAnonymous 
+                              ? 'bg-blue-500 border-blue-500' 
+                              : 'bg-white border-gray-300'
+                          }`}>
+                            {formData.isAnonymous && (
+                              <CheckCircle className="h-4 w-4 text-white absolute -inset-0" />
                             )}
                           </div>
                         </div>
-                      )}
-
-                      {/* Amount Selection */}
-                      <div>
-                        <div className="text-center mb-6">
-                          <h2 className="text-lg md:text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
-                            Choose Your Donation Amount
-                          </h2>
-                          <p className="text-gray-500 text-sm">Every contribution makes a meaningful difference</p>
-                        </div>
-                        
-                        {/* Amount buttons */}
-                        <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6">
-                          {predefinedAmounts.map((amount, index) => (
-                            <AmountButton
-                              key={index}
-                              amount={Math.round(amount)}
-                              index={index}
-                              isSelected={Math.round(Number(formData.localAmount)) === Math.round(Number(amount)) && !uiState.isCustomAmount}
-                              currencySymbol={currencySymbol}
-                              onSelect={handleAmountSelect}
-                            />
-                          ))}
-                        </div>
-                        
-                        {/* Custom Amount Input */}
-                        <div className="relative">
-                          <input
-                            type="number"
-                            value={formData.customAmount}
-                            onChange={(e) => handleCustomAmount(e.target.value)}
-                            placeholder="Enter custom amount"
-                            min="1"
-                            step="1"
-                            className={`w-full pl-12 md:pl-16 pr-4 md:pr-6 py-3 md:py-4 lg:py-5 rounded-2xl border-2 backdrop-blur-md transition-all duration-200 focus:outline-none focus:ring-4 text-base md:text-lg ${
-                              uiState.isCustomAmount 
-                                ? 'border-yellow-300 bg-gradient-to-r from-yellow-50 to-orange-50 focus:ring-yellow-200/50' 
-                                : 'border-gray-200/50 bg-white/70 hover:bg-white/90 focus:ring-blue-200/50 focus:border-blue-300'
-                            } shadow-lg hover:shadow-xl`}
-                          />
-                          <div className="absolute inset-y-0 left-0 pl-4 md:pl-6 flex items-center pointer-events-none">
-                            <span className="text-gray-500 font-bold text-lg md:text-xl">{currencySymbol}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Personal Details */}
-                      <div className="space-y-4">
-                        <div className="text-center">
-                          <h2 className="text-lg md:text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
-                            Your Details
-                          </h2>
-                          <p className="text-gray-500 text-sm">We'll use this information for your donation receipt</p>
-                        </div>
-
-                        <div className="space-y-4">
-                          {/* Name */}
-                          <FormField label="Full Name" required>
-                            <TextInput
-                              id="name"
-                              value={formData.name}
-                              onChange={(e) => handleFormFieldChange('name', e.target.value)}
-                              placeholder="Enter your full name"
-                              required
-                            />
-                          </FormField>
-                          
-                          {/* Phone Number */}
-                          <FormField label="Mobile Number" required errorMessage={hasTouchedPhone && phoneError ? phoneError : null}>
-                            <div className="flex space-x-2 md:space-x-3">
-                              {/* Country Code Dropdown */}
-                              <div className="relative country-code-dropdown-container dropdown-container w-24 md:w-28 flex-shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={toggleCountryCodeDropdown}
-                                  className="w-full h-12 md:h-14 flex items-center justify-between px-3 md:px-4 rounded-2xl border-2 border-gray-200/50 bg-white/70 backdrop-blur-md focus:outline-none focus:ring-4 focus:ring-blue-200/50 transition-all duration-200 shadow-lg hover:shadow-xl"
-                                >
-                                  <span className="text-xs md:text-sm font-semibold truncate">{formData.countryCode}</span>
-                                  <ChevronDown className="h-3 w-3 md:h-4 md:w-4 ml-1 text-slate-400 flex-shrink-0" />
-                                </button>
-                                
-                                {uiState.showCountryCodeDropdown && (
-                                  <div className="absolute z-30 mt-2 w-72 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 max-h-64 overflow-y-auto left-0">
-                                    <div className="p-2 sticky top-0 bg-white/95 backdrop-blur-xl border-b border-gray-100 z-10">
-                                      <input
-                                        type="text"
-                                        value={uiState.countryCodeSearchQuery}
-                                        onChange={(e) => setUiState(prev => ({ ...prev, countryCodeSearchQuery: e.target.value }))}
-                                        placeholder="Search country..."
-                                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
-                                      />
-                                    </div>
-                                    <div className="py-2 overflow-y-auto">
-                                      {filteredCountryCodes.map((countryCode) => (
-                                        <button
-                                          key={countryCode.code + countryCode.country}
-                                          type="button"
-                                          onClick={() => selectCountryCode(countryCode)}
-                                          className="flex items-center w-full px-4 py-3 text-left text-sm hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200"
-                                        >
-                                          <span className="mr-3 text-lg">{countryCode.flag}</span>
-                                          <span className="truncate max-w-[140px] text-slate-600">{countryCode.country}</span>
-                                          <span className="ml-auto font-semibold text-slate-800">{countryCode.code}</span>
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                              
-                              {/* Phone Input */}
-                              <div className="flex-1 min-w-0">
-                                <input
-                                  type="tel"
-                                  value={formData.phone}
-                                  onChange={handlePhoneChange}
-                                  placeholder="Enter your mobile number"
-                                  className={`w-full h-12 md:h-14 px-4 md:px-5 rounded-2xl border-2 backdrop-blur-md focus:outline-none focus:ring-4 transition-all duration-200 text-base md:text-lg shadow-lg hover:shadow-xl ${
-                                    hasTouchedPhone && phoneError
-                                      ? 'border-rose-300 bg-rose-50/70 focus:ring-rose-200/50 focus:border-rose-400'
-                                      : 'border-gray-200/50 bg-white/70 focus:ring-blue-200/50 focus:border-blue-300'
-                                  }`}
-                                  required
-                                />
-                              </div>
-                            </div>
-                          </FormField>
-                          
-                          {/* Email */}
-                          <FormField label="Email Address" required errorMessage={hasEmailTouched && emailError ? emailError : null}>
-                            <input
-                              type="email"
-                              value={formData.email}
-                              onChange={handleEmailChange}
-                              onBlur={handleEmailBlur}
-                              placeholder="Enter your email address"
-                              className={`w-full px-4 md:px-5 py-3 md:py-4 rounded-2xl border-2 backdrop-blur-md focus:outline-none focus:ring-4 transition-all duration-200 text-base md:text-lg shadow-lg hover:shadow-xl ${
-                                hasEmailTouched && emailError
-                                  ? 'border-rose-300 bg-rose-50/70 focus:ring-rose-200/50 focus:border-rose-400'
-                                  : 'border-gray-200/50 bg-white/70 focus:ring-blue-200/50 focus:border-blue-300'
-                              }`}
-                              required
-                            />
-                          </FormField>
-
-                          {/* Address */}
-                          <FormField label="Address" required>
-                            <textarea
-                              value={formData.address}
-                              onChange={(e) => handleFormFieldChange('address', e.target.value)}
-                              placeholder="Enter your street address"
-                              rows={2}
-                              className="w-full px-4 md:px-5 py-3 md:py-4 rounded-2xl border-2 border-gray-200/50 bg-white/70 backdrop-blur-md focus:outline-none focus:ring-4 focus:ring-blue-200/50 focus:border-blue-300 transition-all duration-200 text-base md:text-lg shadow-lg hover:shadow-xl resize-none"
-                              required
-                            />
-                          </FormField>
-                          
-                          {/* City */}
-                          <FormField label="City" required>
-                            <TextInput
-                              id="city"
-                              value={formData.city}
-                              onChange={(e) => handleFormFieldChange('city', e.target.value)}
-                              placeholder="Enter your city"
-                              required
-                            />
-                          </FormField>
-                          
-                          {/* State */}
-                          <FormField label="State" required>
-                            <TextInput
-                              id="state"
-                              value={formData.state}
-                              onChange={(e) => handleFormFieldChange('state', e.target.value)}
-                              placeholder="Enter your state"
-                              required
-                            />
-                          </FormField>
-                          
-                          {/* Pincode */}
-                          <FormField label={formData.country === "India" ? "Pin Code" : "Zip Code"} required>
-                            <input
-                              type="text"
-                              value={formData.pincode}
-                              onChange={handlePincodeChange}
-                              placeholder={formData.country === "India" ? "eg : 110001" : "eg : 10001"}
-                              maxLength={formData.country === "India" ? 6 : 10}
-                              className="w-full px-4 md:px-5 py-3 md:py-4 rounded-2xl border-2 border-gray-200/50 bg-white/70 backdrop-blur-md focus:outline-none focus:ring-4 focus:ring-blue-200/50 focus:border-blue-300 transition-all duration-200 text-base md:text-lg shadow-lg hover:shadow-xl"
-                              required
-                            />
-                          </FormField>
-
-                          {/* PAN Number (Only for Razorpay) */}
-                          {formData.paymentMethod === PaymentMethod.RAZORPAY && (
-                            <FormField label="PAN Number (Optional for tax exemption)">
-                              <input
-                                type="text"
-                                value={formData.panNumber}
-                                placeholder="Enter PAN Number (e.g., ABCTY1234D)"
-                                onChange={handlePanNumberChange}
-                                maxLength={10}
-                                className="w-full px-4 md:px-5 py-3 md:py-4 rounded-2xl border-2 border-gray-200/50 bg-white/70 backdrop-blur-md focus:outline-none focus:ring-4 focus:ring-blue-200/50 focus:border-blue-300 transition-all duration-200 text-base md:text-lg shadow-lg hover:shadow-xl uppercase"
-                              />
-                            </FormField>
-                          )}
-
-                          {/* Country Dropdown (For international) */}
-                          {formData.paymentMethod !== PaymentMethod.RAZORPAY && (
-                            <FormField label="Country" required>
-                              <div className="relative dropdown-container country-dropdown-container">
-                                <button
-                                  type="button"
-                                  onClick={toggleCountryDropdown}
-                                  className="w-full flex items-center justify-between px-4 md:px-5 py-3 md:py-4 rounded-2xl border-2 border-gray-200/50 bg-white/70 backdrop-blur-md focus:outline-none focus:ring-4 focus:ring-blue-200/50 transition-all duration-200 text-base md:text-lg shadow-lg hover:shadow-xl"
-                                >
-                                  <span className="flex items-center">
-                                    <span className="mr-3 text-xl">
-                                      {COUNTRIES.find(c => c.name === formData.country)?.flag || '🌎'}
-                                    </span>
-                                    <span className="font-semibold text-slate-700">{formData.country}</span>
-                                  </span>
-                                  <ChevronDown className="h-5 w-5 text-slate-400" />
-                                </button>
-                                
-                                {uiState.showCountryDropdown && (
-                                  <div className="absolute z-10 mt-2 w-full bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 max-h-64 overflow-y-auto">
-                                    <div className="p-2 sticky top-0 bg-white/95 backdrop-blur-xl border-b border-gray-100 z-10">
-                                      <input
-                                        type="text"
-                                        value={uiState.countrySearchQuery}
-                                        onChange={(e) => setUiState(prev => ({ ...prev, countrySearchQuery: e.target.value }))}
-                                        placeholder="Search country..."
-                                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
-                                      />
-                                    </div>
-                                    <div className="py-2 overflow-y-auto">
-                                      {filteredCountries.map((country) => (
-                                        <button
-                                          key={country.code}
-                                          type="button"
-                                          onClick={() => selectCountry(country)}
-                                          className="flex items-center w-full px-4 py-3 text-left text-sm hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200"
-                                        >
-                                          <span className="mr-3 text-lg">{country.flag}</span>
-                                          <span className="text-slate-700 font-medium">{country.name}</span>
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </FormField>
-                          )}
-
-                          {/* Anonymous Donation Checkbox */}
-                          <div className="mt-4 md:mt-6">
-                            <label className="flex items-center group cursor-pointer">
-                              <div className="relative">
-                                <input 
-                                  type="checkbox" 
-                                  checked={formData.isAnonymous}
-                                  onChange={(e) => handleAnonymousToggle(e.target.checked)}
-                                  className="sr-only"
-                                />
-                                <div className={`w-5 h-5 rounded-lg border-2 transition-all duration-200 ${
-                                  formData.isAnonymous 
-                                    ? 'bg-gradient-to-br from-blue-500 to-indigo-600 border-blue-500' 
-                                    : 'bg-white border-gray-300 group-hover:border-blue-400'
-                                } shadow-md`}>
-                                  {formData.isAnonymous && (
-                                    <CheckCircle className="h-5 w-5 text-white absolute -inset-0" />
-                                  )}
-                                </div>
-                              </div>
-                              <span className="ml-3 text-sm text-slate-600 group-hover:text-slate-800 transition-colors">
-                                Make my donation anonymous (your name won't be displayed publicly)
-                              </span>
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Navigation Buttons */}
-                      <div className="flex space-x-4 pt-4">
-                        <button
-                          onClick={handleBack}
-                          className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                        >
-                          <ArrowLeft className="h-4 w-4 mr-2" />
-                          Back
-                        </button>
-                        
-                        <button
-                          type="button"
-                          onClick={handleSubmit}
-                          disabled={!areRequiredFieldsFilled() || uiState.isSubmitting}
-                          className={`
-                            flex-1 flex items-center justify-center px-6 py-4 rounded-2xl text-lg font-bold transition-all duration-200 shadow-xl
-                            ${areRequiredFieldsFilled() && !uiState.isSubmitting
-                              ? 'bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 hover:from-yellow-500 hover:via-orange-600 hover:to-red-600 text-white shadow-orange-200/50 hover:shadow-2xl' 
-                              : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-gray-200/50'}
-                          `}
-                        >
-                          {uiState.isSubmitting ? (
-                            <div className="flex items-center">
-                              <Loader2 className="animate-spin h-5 w-5 mr-3" />
-                              Processing...
-                            </div>
-                          ) : (
-                            <span className="flex items-center">
-                              <Heart className="h-5 w-5 mr-3" />
-                              Donate {currencySymbol}{Math.round(formData.localAmount).toLocaleString()}
-                            </span>
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Trust Badges */}
-                      <div className="grid grid-cols-3 gap-3 md:gap-4 mt-6">
-                        {TRUST_BADGES.map((badge, index) => (
-                          <TrustBadge key={index} badge={badge} index={index} />
-                        ))}
-                      </div>
-
-                      {/* Security Notice */}
-                      <div className="flex justify-center">
-                        <div className="bg-white/80 backdrop-blur-md rounded-2xl py-2 md:py-3 px-4 md:px-6 flex items-center text-sm text-slate-600 shadow-lg border border-white/30">
-                          <Lock className="h-4 w-4 mr-2 text-emerald-500" />
-                          <span className="mr-2">Secure payment powered by</span>
-                          {formData.paymentMethod === PaymentMethod.RAZORPAY 
-                            ? <div className="h-4 w-14 bg-indigo-600 rounded flex items-center justify-center text-white text-[10px] font-bold">Razorpay</div>
-                            : <div className="h-4 w-14 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">Stripe</div>}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Summary Column */}
-                    <div className="hidden lg:block">
-                      <div className="bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/30 p-6 sticky top-8">
-                        {/* Campaign Image Placeholder */}
-                        <div className="h-48 bg-gradient-to-br from-yellow-400 via-orange-500 to-pink-600 rounded-2xl flex items-center justify-center mb-6">
-                          <Heart className="h-12 w-12 text-white/80" />
-                        </div>
-                        
-                        {/* Donation Amount Display */}
-                        <div className="text-center bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-4 border border-yellow-200/50 shadow-lg">
-                          <p className="text-sm text-slate-500 mb-2 font-medium">Your donation amount</p>
-                          <p className="text-3xl font-bold bg-gradient-to-r from-yellow-600 via-orange-600 to-red-600 bg-clip-text text-transparent mb-1">
-                            {currencySymbol}{Math.round(formData.localAmount).toLocaleString()}
-                          </p>
-                          <div className="h-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full mt-3"></div>
-                        </div>
-                      </div>
+                        <span className="ml-3 text-sm text-gray-600">
+                          Make my donation anonymous ( your name won't be displayed publicly )
+                        </span>
+                      </label>
                     </div>
                   </div>
-                )}
 
-                {/* Message Display */}
-                {message && (
-                  <div className={`mt-6 p-4 rounded-2xl text-center font-medium ${
-                    message.includes('successful') || message.includes('Thank you') 
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                      : message.includes('Error') || message.includes('cancelled') 
-                      ? 'bg-red-50 text-red-700 border border-red-200'
-                      : 'bg-blue-50 text-blue-700 border border-blue-200'
-                  }`}>
-                    {message}
+                  {/* Donate Button */}
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={!areRequiredFieldsFilled() || uiState.isSubmitting}
+                    className={`
+                      w-full flex items-center justify-center px-6 py-4 rounded-xl text-lg font-bold transition-all duration-200 shadow-lg mb-4
+                      ${areRequiredFieldsFilled() && !uiState.isSubmitting
+                        ? 'bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white shadow-orange-200 hover:shadow-xl' 
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'}
+                    `}
+                  >
+                    {uiState.isSubmitting ? (
+                      <div className="flex items-center">
+                        <Loader2 className="animate-spin h-5 w-5 mr-3" />
+                        Processing...
+                      </div>
+                    ) : (
+                      <span className="flex items-center">
+                        <Heart className="h-5 w-5 mr-3" />
+                        Donate {currencySymbol}{Math.round(formData.localAmount).toLocaleString()}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Security Notice */}
+                  <div className="flex justify-center mb-4">
+                    <div className="bg-gray-50 rounded-xl py-2 px-4 flex items-center text-sm text-gray-600">
+                      <Lock className="h-4 w-4 mr-2 text-green-500" />
+                      <span className="mr-2">Secure payment powered by</span>
+                      {formData.paymentMethod === PaymentMethod.RAZORPAY 
+                        ? <span className="bg-indigo-600 text-white px-2 py-1 rounded text-xs font-bold">Razorpay</span>
+                        : <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-bold">Stripe</span>}
+                    </div>
                   </div>
-                )}
-              </div>
+
+                  {/* Trust Badges */}
+                  <div className="grid grid-cols-3 gap-3">
+                    {TRUST_BADGES.map((badge, index) => (
+                      <div key={index} className="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100">
+                        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                          <badge.icon className="h-4 w-4 text-orange-500" />
+                        </div>
+                        <h4 className="text-xs font-bold text-gray-700">
+                          {badge.title}
+                        </h4>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {badge.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Message Display */}
+              {message && (
+                <div className={`mt-4 p-3 rounded-xl text-center text-sm font-medium ${
+                  message.includes('successful') || message.includes('Thank you') 
+                    ? 'bg-green-50 text-green-700 border border-green-200' 
+                    : message.includes('Error') || message.includes('cancelled') 
+                    ? 'bg-red-50 text-red-700 border border-red-200'
+                    : 'bg-blue-50 text-blue-700 border border-blue-200'
+                }`}>
+                  {message}
+                </div>
+              )}
             </div>
           </div>
         </div>
