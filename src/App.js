@@ -76,7 +76,7 @@ function App() {
       if (data.type === 'subscription') {
         // For subscriptions, use Razorpay popup with subscription_id
         const subscriptionOptions = {
-          key: 'rzp_test_4nEyceM4GUQmPk',
+          //key: 'rzp_test_4nEyceM4GUQmPk',
           subscription_id: data.subscription_id,
           amount: data.amount,        // ← Added amount
           currency: data.currency,    // ← Added currency  
@@ -123,7 +123,7 @@ function App() {
       } else if (data.type === 'order' || data.type === 'order_with_recurring_intent') {
         // For regular orders, use Razorpay popup
         const options = {
-          key: 'rzp_test_4nEyceM4GUQmPk',
+          //key: 'rzp_test_4nEyceM4GUQmPk',
           amount: data.amount,
           currency: data.currency,
           name: 'Your Organization',
