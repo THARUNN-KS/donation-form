@@ -1,2291 +1,439 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import './App.css';
 
-// Near the top of your App.js file
-const API_BASE_URL = process.env.NODE_ENV === 'development' 
-  ? 'http://localhost:5001' 
+// --- Helper Components & Data ---
+
+// Base URL for the API
+const API_BASE_URL = process.env.NODE_ENV === 'development'
+  ? 'http://localhost:5001'
   : 'https://donation-form-j142.vercel.app';
 
-// Icons as simple SVG components
-const ArrowLeft = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 12H5m7-7l-7 7 7 7" />
-  </svg>
-);
+// --- SVG Icons ---
+const ArrowLeft = ({ className }) => (<svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>);
+const Heart = ({ className }) => (<svg className={className} fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>);
+const Globe = ({ className }) => (<svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>);
+const CreditCard = ({ className }) => (<svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>);
+const ChevronDown = ({ className }) => (<svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>);
+const ChevronRight = ({ className }) => (<svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>);
+const Lock = ({ className }) => (<svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>);
+const Loader2 = ({ className }) => (<svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>);
+const X = ({ className }) => (<svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>);
+const ShieldCheck = ({ className }) => (<svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>);
+const Shield = ({ className }) => (<svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>);
+const Building = ({ className }) => (<svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>);
+const CheckCircle = ({ className }) => (<svg className={className} fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>);
+const Star = ({ className }) => (<svg className={className} fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" /></svg>);
 
-const Heart = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-  </svg>
-);
+// --- Constants & Data ---
+const PaymentMethod = { RAZORPAY: 'razorpay', STRIPE: 'stripe' };
+const AVAILABLE_CURRENCIES = [ { code: 'USD', symbol: '$', name: 'US Dollar' }, { code: 'EUR', symbol: '€', name: 'Euro' }, { code: 'GBP', symbol: '£', name: 'British Pound' }, { code: 'INR', symbol: '₹', name: 'Indian Rupee' }, { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' }, { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' }, { code: 'JPY', symbol: '¥', name: 'Japanese Yen' }];
+const DEFAULT_DONATION_AMOUNTS = { INR: [42000, 12000, 2000], USD: [500, 300, 100] };
+const COUNTRY_CODES = [{ country: "India", code: "+91", flag: "🇮🇳" }, { country: "United States", code: "+1", flag: "🇺🇸" }, { country: "United Kingdom", code: "+44", flag: "🇬🇧" }, { country: "Canada", code: "+1", flag: "🇨🇦" }, { country: "Australia", code: "+61", flag: "🇦🇺" }];
+const COUNTRIES = [{ name: "India", code: "IN", flag: "🇮🇳" }, { name: "United States", code: "US", flag: "🇺🇸" }, { name: "United Kingdom", code: "GB", flag: "🇬🇧" }, { name: "Canada", code: "CA", flag: "🇨🇦" }, { name: "Australia", code: "AU", flag: "🇦🇺" }];
+const DEFAULT_EXCHANGE_RATES = { 'USD': 1, 'EUR': 0.85, 'GBP': 0.73, 'INR': 83.15, 'CAD': 1.35, 'AUD': 1.52, 'JPY': 149.50 };
+const TRUST_BADGES = [{ icon: ShieldCheck, title: "Bank-Level Security", description: "256-bit SSL encryption" }, { icon: Shield, title: "Tax Benefits", description: "80G tax exemption" }, { icon: Building, title: "Verified NGO", description: "Government registered" }];
 
-const Globe = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);
-
-const CreditCard = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-  </svg>
-);
-
-const ChevronDown = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-  </svg>
-);
-
-const ChevronRight = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-  </svg>
-);
-
-const Lock = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-  </svg>
-);
-
-const Loader2 = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24">
-    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-  </svg>
-);
-
-const X = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-  </svg>
-);
-
-const ShieldCheck = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-  </svg>
-);
-
-const Shield = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-  </svg>
-);
-
-const Building = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-  </svg>
-);
-
-const CheckCircle = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
-  </svg>
-);
-
-const Star = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
-  </svg>
-);
-
-// Payment Method enumeration
-const PaymentMethod = {
-  RAZORPAY: 'razorpay',
-  STRIPE: 'stripe'
+// --- Utility Functions ---
+const getCurrencySymbol = (currencyCode) => AVAILABLE_CURRENCIES.find(c => c.code === currencyCode)?.symbol || '$';
+const convertCurrency = (amount, from, to, rates = DEFAULT_EXCHANGE_RATES) => {
+  if (from === to) return amount;
+  const usdAmount = from === 'USD' ? amount : amount / (rates[from] || 1);
+  return to === 'USD' ? usdAmount : usdAmount * (rates[to] || 1);
 };
-
-// Available currencies with symbols
-const AVAILABLE_CURRENCIES = [
-  { code: 'USD', symbol: '$', name: 'US Dollar' },
-  { code: 'EUR', symbol: '€', name: 'Euro' },
-  { code: 'GBP', symbol: '£', name: 'British Pound' },
-  { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
-  { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
-  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
-  { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
-  { code: 'CHF', symbol: 'Fr', name: 'Swiss Franc' },
-  { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
-  { code: 'SEK', symbol: 'kr', name: 'Swedish Krona' }
-];
-
-// Default donation amounts
-const DEFAULT_DONATION_AMOUNTS = {
-  INR: [42000, 12000, 2000],
-  USD: [500, 300, 100]
-};
-
-// Country codes for phone validation
-const COUNTRY_CODES = [
-  { country: "India", code: "+91", flag: "🇮🇳" },
-  { country: "United States", code: "+1", flag: "🇺🇸" },
-  { country: "United Kingdom", code: "+44", flag: "🇬🇧" },
-  { country: "Canada", code: "+1", flag: "🇨🇦" },
-  { country: "Australia", code: "+61", flag: "🇦🇺" },
-  { country: "Germany", code: "+49", flag: "🇩🇪" },
-  { country: "France", code: "+33", flag: "🇫🇷" },
-  { country: "Japan", code: "+81", flag: "🇯🇵" },
-  { country: "Singapore", code: "+65", flag: "🇸🇬" },
-  { country: "UAE", code: "+971", flag: "🇦🇪" }
-];
-
-// Countries list
-const COUNTRIES = [
-  { name: "India", code: "IN", flag: "🇮🇳" },
-  { name: "United States", code: "US", flag: "🇺🇸" },
-  { name: "United Kingdom", code: "GB", flag: "🇬🇧" },
-  { name: "Canada", code: "CA", flag: "🇨🇦" },
-  { name: "Australia", code: "AU", flag: "🇦🇺" },
-  { name: "Germany", code: "DE", flag: "🇩🇪" },
-  { name: "France", code: "FR", flag: "🇫🇷" },
-  { name: "Japan", code: "JP", flag: "🇯🇵" },
-  { name: "Singapore", code: "SG", flag: "🇸🇬" },
-  { name: "UAE", code: "AE", flag: "🇦🇪" }
-];
-
-// Exchange rates (simplified - in production, fetch from API)
-const DEFAULT_EXCHANGE_RATES = {
-  'USD': 1,
-  'EUR': 0.85,
-  'GBP': 0.73,
-  'INR': 83.15,
-  'CAD': 1.35,
-  'AUD': 1.52,
-  'JPY': 149.50,
-  'CHF': 0.88,
-  'CNY': 7.24,
-  'SEK': 10.87
-};
-
-// Trust badges with premium design
-const TRUST_BADGES = [
-  {
-    icon: ShieldCheck,
-    title: "Bank-Level Security",
-    description: "256-bit SSL encryption"
-  },
-  {
-    icon: Shield,
-    title: "Tax Benefits",
-    description: "80G tax exemption"
-  },
-  {
-    icon: Building,
-    title: "Verified NGO",
-    description: "Government registered"
-  }
-];
-
-// Utility functions
-const getCurrencySymbol = (currencyCode) => {
-  const currency = AVAILABLE_CURRENCIES.find(c => c.code === currencyCode);
-  return currency ? currency.symbol : '$';
-};
-
-const convertCurrency = (amount, fromCurrency, toCurrency, rates = DEFAULT_EXCHANGE_RATES) => {
-  if (fromCurrency === toCurrency) return amount;
-  
-  // Convert to USD first, then to target currency
-  const usdAmount = fromCurrency === 'USD' ? amount : amount / rates[fromCurrency];
-  const convertedAmount = toCurrency === 'USD' ? usdAmount : usdAmount * rates[toCurrency];
-  
-  return convertedAmount;
-};
-
-const isValidEmail = (email) => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 const validatePhoneNumber = (phone, countryCode) => {
   if (!phone) return false;
-  
-  // Remove all non-digits
   const cleanPhone = phone.replace(/\D/g, '');
-  
-  // Basic validation based on country code
   switch (countryCode) {
-    case '+91': // India
-      return cleanPhone.length === 10 && /^[6-9]/.test(cleanPhone);
-    case '+1': // US/Canada
-      return cleanPhone.length === 10;
-    case '+44': // UK
-      return cleanPhone.length >= 10 && cleanPhone.length <= 11;
-    default:
-      return cleanPhone.length >= 7 && cleanPhone.length <= 15;
+    case '+91': return cleanPhone.length === 10 && /^[6-9]/.test(cleanPhone);
+    case '+1': return cleanPhone.length === 10;
+    default: return cleanPhone.length >= 7 && cleanPhone.length <= 15;
   }
 };
+const detectUserLocation = async () => ({ country: 'IN', country_name: 'India', currency: 'INR' }); // Mock location
 
-// Location detection mock (replace with actual geolocation service)
-const detectUserLocation = async () => {
-  try {
-    // Mock location detection - replace with actual service
-    return {
-      country: 'IN',
-      country_name: 'India',
-      currency: 'INR',
-      continent: 'AS'
-    };
-  } catch (error) {
-    console.error('Location detection failed:', error);
-    return {
-      country: 'IN',
-      country_name: 'India',
-      currency: 'INR',
-      continent: 'AS'
-    };
-  }
-};
-
-// Main App component
+// --- Main App Component ---
 function App() {
-  // Modal state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  // Form state
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    amount: 0,
-    localAmount: 0,
-    customAmount: "",
-    name: "",
-    email: "",
-    phone: "",
-    isAnonymous: false,
-    country: "India",
-    countryCode: "+91",
-    isIndian: true,
-    address: '',
-    city: '',
-    state: '',
-    pincode: '',
-    panNumber: '',
-    paymentMethod: PaymentMethod.RAZORPAY,
-    selectedCurrency: 'INR',
-    user_donated_currency: 'INR'
+    amount: 0, localAmount: 0, customAmount: "", name: "", email: "", phone: "",
+    isAnonymous: false, country: "India", countryCode: "+91", isIndian: true,
+    address: '', city: '', state: '', pincode: '', panNumber: '',
+    paymentMethod: PaymentMethod.RAZORPAY, selectedCurrency: 'INR'
   });
-  
-  // UI state
   const [uiState, setUiState] = useState({
-    isSubmitting: false,
-    isCustomAmount: false,
-    showCountryDropdown: false,
-    showCountryCodeDropdown: false,
-    showCurrencyDropdown: false,
-    countryCodeSearchQuery: '',
-    countrySearchQuery: '',
-    currencySearchQuery: '',
-    isConverting: false
+    isSubmitting: false, isCustomAmount: false, showCountryDropdown: false,
+    showCountryCodeDropdown: false, showCurrencyDropdown: false,
+    countryCodeSearchQuery: '', countrySearchQuery: '', currencySearchQuery: ''
   });
-  
-  // Other state
-  const [userLocation, setUserLocation] = useState({
-    country: 'IN',
-    country_name: 'India',
-    currency: 'INR',
-    continent: 'AS'
-  });
-  
-  const [stripeLoaded, setStripeLoaded] = useState(false);
-  const [message, setMessage] = useState('');
-  const [hasTouchedPhone, setHasTouchedPhone] = useState(false);
-  const [phoneError, setPhoneError] = useState('');
-  const [emailError, setEmailError] = useState("");
-  const [hasEmailTouched, setHasEmailTouched] = useState(false);
-
-  // Refs
+  const [modalState, setModalState] = useState({ isOpen: false, status: '', message: '' }); // 'loading', 'success', 'error'
+  const [validationErrors, setValidationErrors] = useState({});
   const userChangedDonorType = useRef(false);
-  const isOutsideIndia = useRef(false);
 
-  // Load payment gateway scripts dynamically
-  useEffect(() => {
-    // Load Razorpay script
-    const razorpayScript = document.createElement('script');
-    razorpayScript.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    razorpayScript.async = true;
-    document.body.appendChild(razorpayScript);
-
-    // Load Stripe script
-    const stripeScript = document.createElement('script');
-    stripeScript.src = 'https://js.stripe.com/v3/';
-    stripeScript.async = true;
-    stripeScript.onload = () => setStripeLoaded(true);
-    document.body.appendChild(stripeScript);
-  }, []);
-
-  // Detect location on component mount
-  useEffect(() => {
-    const detectLocation = async () => {
-      try {
-        const location = await detectUserLocation();
-        setUserLocation(location);
-        
-        const isIndianLocation = location.country === 'IN';
-        isOutsideIndia.current = !isIndianLocation;
-        
-        if (!userChangedDonorType.current) {
-          setFormData(prev => ({
-            ...prev,
-            country: isIndianLocation ? 'India' : location.country_name || 'United States',
-            countryCode: isIndianLocation ? '+91' : '+1',
-            paymentMethod: isIndianLocation ? PaymentMethod.RAZORPAY : PaymentMethod.STRIPE,
-            selectedCurrency: isIndianLocation ? 'INR' : 'USD',
-            user_donated_currency: isIndianLocation ? 'INR' : 'USD'
-          }));
-        }
-      } catch (error) {
-        console.error('Error detecting location:', error);
-      }
-    };
-    
-    detectLocation();
-  }, []);
-
-  // Get predefined amounts based on currency
+  // --- Memos and Callbacks for Performance ---
   const predefinedAmounts = useMemo(() => {
-    if (formData.selectedCurrency === 'INR') {
-      return DEFAULT_DONATION_AMOUNTS.INR;
-    } else if (formData.selectedCurrency === 'USD') {
-      return DEFAULT_DONATION_AMOUNTS.USD;
-    } else {
-      // Convert USD amounts to selected currency
-      return DEFAULT_DONATION_AMOUNTS.USD.map(amount => {
-        const converted = convertCurrency(amount, 'USD', formData.selectedCurrency);
-        return Math.round(converted);
-      });
-    }
+    const baseAmounts = formData.selectedCurrency === 'INR' ? DEFAULT_DONATION_AMOUNTS.INR : DEFAULT_DONATION_AMOUNTS.USD;
+    if (['INR', 'USD'].includes(formData.selectedCurrency)) return baseAmounts;
+    return baseAmounts.map(amount => Math.round(convertCurrency(amount, 'USD', formData.selectedCurrency)));
   }, [formData.selectedCurrency]);
 
-  // Get currency symbol
-  const currencySymbol = useMemo(() => {
-    if (formData.isIndian && formData.paymentMethod === PaymentMethod.RAZORPAY) {
-      return "₹";
-    }
-    return getCurrencySymbol(formData.selectedCurrency);
-  }, [formData.isIndian, formData.paymentMethod, formData.selectedCurrency]);
+  const currencySymbol = useMemo(() => getCurrencySymbol(formData.selectedCurrency), [formData.selectedCurrency]);
+  
+  const filteredCountries = useMemo(() => COUNTRIES.filter(c => c.name.toLowerCase().includes(uiState.countrySearchQuery.toLowerCase())), [uiState.countrySearchQuery]);
+  const filteredCountryCodes = useMemo(() => COUNTRY_CODES.filter(c => c.country.toLowerCase().includes(uiState.countryCodeSearchQuery.toLowerCase()) || c.code.includes(uiState.countryCodeSearchQuery)), [uiState.countryCodeSearchQuery]);
+  const filteredCurrencies = useMemo(() => AVAILABLE_CURRENCIES.filter(c => c.name.toLowerCase().includes(uiState.currencySearchQuery.toLowerCase()) || c.code.toLowerCase().includes(uiState.currencySearchQuery)), [uiState.currencySearchQuery]);
 
-  // Filter countries based on search query
-  const filteredCountries = useMemo(() => {
-    let filtered = [...COUNTRIES];
-    
-    if (uiState.countrySearchQuery && uiState.countrySearchQuery.trim() !== '') {
-      const query = uiState.countrySearchQuery.toLowerCase().trim();
-      filtered = filtered.filter(country => 
-        country.name.toLowerCase().includes(query) || 
-        country.code.toLowerCase().includes(query)
-      );
-    }
-    
-    return filtered;
-  }, [uiState.countrySearchQuery]);
-
-  // Filter country codes based on search query
-  const filteredCountryCodes = useMemo(() => {
-    let filtered = [...COUNTRY_CODES];
-    
-    if (uiState.countryCodeSearchQuery && uiState.countryCodeSearchQuery.trim() !== '') {
-      const query = uiState.countryCodeSearchQuery.toLowerCase().trim();
-      filtered = filtered.filter(code => 
-        code.country.toLowerCase().includes(query) || 
-        code.code.replace('+', '').includes(query)
-      );
-    }
-    
-    return filtered;
-  }, [uiState.countryCodeSearchQuery]);
-
-  // Filter currencies based on search query
-  const filteredCurrencies = useMemo(() => {
-    let filtered = [...AVAILABLE_CURRENCIES];
-    
-    if (uiState.currencySearchQuery && uiState.currencySearchQuery.trim() !== '') {
-      const query = uiState.currencySearchQuery.toLowerCase().trim();
-      filtered = filtered.filter(currency => 
-        currency.code.toLowerCase().includes(query) || 
-        currency.symbol.toLowerCase().includes(query) || 
-        currency.name.toLowerCase().includes(query)
-      );
-    }
-    
-    return filtered;
-  }, [uiState.currencySearchQuery]);
-
-  // Check if all mandatory fields are filled
   const areRequiredFieldsFilled = useCallback(() => {
-    if (!formData.amount || formData.amount <= 0) return false;
-    if (!formData.name || !formData.email || !formData.phone) return false;
-    if (!formData.email || !isValidEmail(formData.email)) return false;
-    if (!formData.address || !formData.city || !formData.state || !formData.pincode) return false;
-    
-    return true;
-  }, [
-    formData.amount, 
-    formData.name, 
-    formData.email, 
-    formData.phone, 
-    formData.address, 
-    formData.city, 
-    formData.state, 
-    formData.pincode
-  ]);
+    const errors = {};
+    if (!formData.amount || formData.amount <= 0) errors.amount = "Please select an amount.";
+    if (!formData.name.trim()) errors.name = "Full name is required.";
+    if (!formData.email.trim() || !isValidEmail(formData.email)) errors.email = "A valid email is required.";
+    if (!formData.phone.trim() || !validatePhoneNumber(formData.phone, formData.countryCode)) errors.phone = "A valid phone number is required.";
+    if (!formData.address.trim()) errors.address = "Address is required.";
+    if (!formData.city.trim()) errors.city = "City is required.";
+    if (!formData.state.trim()) errors.state = "State is required.";
+    if (!formData.pincode.trim()) errors.pincode = "Pincode is required.";
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  }, [formData]);
 
-  // Event handlers
+  // --- Event Handlers ---
   const handleAmountSelect = useCallback((amount) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      amount: amount,
-      localAmount: amount,
-      customAmount: ""
-    }));
+    setFormData(prev => ({ ...prev, amount, localAmount: amount, customAmount: "" }));
     setUiState(prev => ({ ...prev, isCustomAmount: false }));
   }, []);
 
   const handleCustomAmount = useCallback((value) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      customAmount: value
-    }));
-    
-    if (value) {
-      setUiState(prev => ({ ...prev, isCustomAmount: true }));
-      
-      const numValue = Number(value);
-      if (!isNaN(numValue) && numValue >= 0) {
-        const roundedAmount = Math.round(numValue);
-        
-        setFormData(prev => ({
-          ...prev,
-          localAmount: roundedAmount,
-          amount: roundedAmount
-        }));
-      }
-    } else {
-      setUiState(prev => ({ ...prev, isCustomAmount: false }));
-      setFormData(prev => ({ 
-        ...prev, 
-        amount: 0,
-        localAmount: 0
-      }));
-    }
+    const numValue = Number(value);
+    setFormData(prev => ({ ...prev, customAmount: value, amount: numValue, localAmount: numValue }));
+    setUiState(prev => ({ ...prev, isCustomAmount: !!value }));
   }, []);
 
   const handleFormFieldChange = useCallback((field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  }, []);
+    if(validationErrors[field]) setValidationErrors(prev => ({...prev, [field]: null}));
+  }, [validationErrors]);
 
-  const handlePhoneChange = useCallback((e) => {
-    const value = e.target.value.replace(/\D/g, '');
-    setFormData(prev => ({ ...prev, phone: value }));
-    setHasTouchedPhone(true);
-    setPhoneError(validatePhoneNumber(value, formData.countryCode) ? '' : 'Invalid phone number');
-  }, [formData.countryCode]);
-
-  const handleEmailChange = useCallback((e) => {
-    const value = e.target.value;
-    setFormData(prev => ({ ...prev, email: value }));
-    setHasEmailTouched(true);
-    
-    if (!value) {
-      setEmailError("Email is required");
-    } else if (!isValidEmail(value)) {
-      setEmailError("Please enter a valid email address");
-    } else {
-      setEmailError("");
-    }
-  }, []);
-
-  const handleEmailBlur = useCallback(() => {
-    setHasEmailTouched(true);
-    if (!formData.email) {
-      setEmailError("Email is required");
-    } else if (!isValidEmail(formData.email)) {
-      setEmailError("Please enter a valid email address");
-    }
-  }, [formData.email]);
-
-  const handlePincodeChange = useCallback((e) => {
-    if (formData.country === "India") {
-      const numericValue = e.target.value.replace(/\D/g, '');
-      if (numericValue.length <= 6) {
-        setFormData(prev => ({ ...prev, pincode: numericValue }));
-      }
-    } else {
-      const value = e.target.value;
-      if (value.length <= 10) {
-        setFormData(prev => ({ ...prev, pincode: value }));
-      }
-    }
-  }, [formData.country]);
-
-  const handlePanNumberChange = useCallback((e) => {
-    setFormData(prev => ({ ...prev, panNumber: e.target.value.toUpperCase() }));
-  }, []);
-
-  const handleAnonymousToggle = useCallback((checked) => {
-    setFormData(prev => ({ ...prev, isAnonymous: checked }));
-  }, []);
-
-  // Handle citizenship selection
   const handleCitizenshipSelect = useCallback((isIndian) => {
-    if (!isIndian) {
-      const defaultCurrency = "USD";
-      
-      setFormData(prev => ({
-        ...prev,
-        isIndian: isIndian,
-        country: isIndian ? "India" : userLocation.country_name || "United States",
-        countryCode: isIndian ? "+91" : "+1",
-        paymentMethod: isIndian ? PaymentMethod.RAZORPAY : PaymentMethod.STRIPE,
-        selectedCurrency: isIndian ? "INR" : defaultCurrency,
-        user_donated_currency: isIndian ? "INR" : defaultCurrency
-      }));
-      
-      setCurrentStep(3);
-      
-      setTimeout(() => {
-        const defaultAmounts = isIndian ? DEFAULT_DONATION_AMOUNTS.INR : DEFAULT_DONATION_AMOUNTS.USD;
-        const defaultAmount = defaultAmounts[1];
-        
-        setFormData(prev => ({
-          ...prev,
-          amount: defaultAmount,
-          localAmount: defaultAmount,
-          customAmount: ""
-        }));
-        
-        setUiState(prev => ({
-          ...prev,
-          isCustomAmount: false
-        }));
-      }, 50);
-    } else {
-      setCurrentStep(2);
-      
-      setFormData(prev => ({
-        ...prev,
-        isIndian: true,
-        country: "India",
-        countryCode: "+91",
-        paymentMethod: PaymentMethod.RAZORPAY,
-        selectedCurrency: "INR",
-        user_donated_currency: "INR"
-      }));
-    }
-    
     userChangedDonorType.current = true;
-  }, [userLocation]);
-
-  // Handle payment method selection
+    if (isIndian) {
+      setFormData(prev => ({ ...prev, isIndian: true, country: "India", countryCode: "+91", paymentMethod: PaymentMethod.RAZORPAY, selectedCurrency: 'INR' }));
+      setCurrentStep(2);
+    } else {
+      setFormData(prev => ({ ...prev, isIndian: false, country: "United States", countryCode: "+1", paymentMethod: PaymentMethod.STRIPE, selectedCurrency: 'USD' }));
+      setCurrentStep(3);
+    }
+  }, []);
+  
   const handlePaymentMethodSelect = useCallback((method) => {
     const isRazorpay = method === PaymentMethod.RAZORPAY;
-    
-    setFormData(prev => ({
-      ...prev,
-      isIndian: isRazorpay,
-      paymentMethod: method,
-      selectedCurrency: isRazorpay ? 'INR' : 'USD',
-      user_donated_currency: isRazorpay ? 'INR' : 'USD'
-    }));
-    
+    setFormData(prev => ({ ...prev, paymentMethod: method, selectedCurrency: isRazorpay ? 'INR' : 'USD' }));
     setCurrentStep(3);
-
-    setTimeout(() => {
-      const defaultAmounts = isRazorpay ? DEFAULT_DONATION_AMOUNTS.INR : DEFAULT_DONATION_AMOUNTS.USD;
-      const defaultAmount = defaultAmounts[1];
-      
-      setFormData(prev => ({
-        ...prev,
-        amount: defaultAmount,
-        localAmount: defaultAmount,
-        customAmount: ""
-      }));
-      
-      setUiState(prev => ({
-        ...prev,
-        isCustomAmount: false
-      }));
-    }, 50);
   }, []);
 
-  // Toggle dropdown visibility
-  const toggleCountryDropdown = useCallback((e) => {
-    e.preventDefault();
-    const newState = !uiState.showCountryDropdown;
-    
-    setUiState(prev => ({
-      ...prev,
-      showCountryDropdown: newState,
-      showCountryCodeDropdown: false,
-      showCurrencyDropdown: false,
-      countrySearchQuery: ''
-    }));
-  }, [uiState.showCountryDropdown]);
-
-  const toggleCountryCodeDropdown = useCallback((e) => {
-    e.preventDefault();
-    const newState = !uiState.showCountryCodeDropdown;
-    
-    setUiState(prev => ({
-      ...prev,
-      showCountryCodeDropdown: newState,
-      showCountryDropdown: false,
-      showCurrencyDropdown: false,
-      countryCodeSearchQuery: ''
-    }));
-  }, [uiState.showCountryCodeDropdown]);
-
-  const toggleCurrencyDropdown = useCallback((e) => {
-    e.preventDefault();
-    const newState = !uiState.showCurrencyDropdown;
-    
-    setUiState(prev => ({
-      ...prev,
-      showCurrencyDropdown: newState,
-      showCountryDropdown: false,
-      showCountryCodeDropdown: false,
-      currencySearchQuery: ''
-    }));
-  }, [uiState.showCurrencyDropdown]);
-
-  // Handle country selection
-  const selectCountry = useCallback((country) => {
-    const countryCodeEntry = COUNTRY_CODES.find(
-      code => code.country === country.name
-    );
-    setFormData(prev => ({
-      ...prev, 
-      country: country.name,
-      countryCode: countryCodeEntry ? countryCodeEntry.code : prev.countryCode 
-    }));
-    setUiState(prev => ({
-      ...prev,
-      showCountryDropdown: false,
-      countrySearchQuery: ''
-    }));
-  }, []);
-
-  const selectCountryCode = useCallback((countryCode) => {
-    setFormData(prev => ({
-      ...prev, 
-      countryCode: countryCode.code
-    }));
-    setUiState(prev => ({
-      ...prev,
-      showCountryCodeDropdown: false,
-      countryCodeSearchQuery: ''
-    }));
-  }, []);
-
-  const handleCurrencySelect = useCallback((currencyCode) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedCurrency: currencyCode,
-      user_donated_currency: currencyCode
-    }));
-    
-    setUiState(prev => ({
-      ...prev,
-      showCurrencyDropdown: false,
-      currencySearchQuery: '',
-      isCustomAmount: false
-    }));
-
-    // Reset amounts when currency changes
-    const defaultAmounts = currencyCode === 'INR' ? DEFAULT_DONATION_AMOUNTS.INR : 
-                          currencyCode === 'USD' ? DEFAULT_DONATION_AMOUNTS.USD :
-                          DEFAULT_DONATION_AMOUNTS.USD.map(amount => Math.round(convertCurrency(amount, 'USD', currencyCode)));
-    
-    const defaultAmount = defaultAmounts[1];
-    
-    setFormData(prev => ({
-      ...prev,
-      amount: defaultAmount,
-      localAmount: defaultAmount,
-      customAmount: ""
-    }));
-  }, []);
-
-  // Navigate back
   const handleBack = useCallback(() => {
-    if (currentStep === 1) {
-      setIsModalOpen(false);
-    } else if (currentStep === 3 && !formData.isIndian) {
-      setCurrentStep(1);
-    } else {
-      setCurrentStep(currentStep - 1);
-    }
+    if (currentStep === 1) return; // Or navigate away
+    if (currentStep === 3 && !formData.isIndian) setCurrentStep(1);
+    else setCurrentStep(prev => prev - 1);
   }, [currentStep, formData.isIndian]);
-
-  // Razorpay payment handler
-  const initializeRazorpayPayment = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/create-order`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: formData.amount,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          currency: 'INR',
-          frequency: 'One-time'
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || data.error || 'Failed to process payment');
-      }
-
-      const options = {
-        key: 'rzp_test_4nEyceM4GUQmPk',
-        amount: data.amount,
-        currency: data.currency,
-        name: 'Your Organization',
-        description: `Donation - ₹${formData.amount}`,
-        order_id: data.id,
-        prefill: {
-          name: formData.name,
-          email: formData.email,
-          contact: formData.phone
-        },
-        theme: {
-          color: '#3399cc'
-        },
-        handler: function(response) {
-          setMessage('Thank you for your generous donation!');
-          setUiState(prev => ({ ...prev, isSubmitting: false }));
-          
-          // Reset form
-          setTimeout(() => {
-            setFormData({
-              amount: 0,
-              localAmount: 0,
-              customAmount: "",
-              name: "",
-              email: "",
-              phone: "",
-              isAnonymous: false,
-              country: "India",
-              countryCode: "+91",
-              isIndian: true,
-              address: '',
-              city: '',
-              state: '',
-              pincode: '',
-              panNumber: '',
-              paymentMethod: PaymentMethod.RAZORPAY,
-              selectedCurrency: 'INR',
-              user_donated_currency: 'INR'
-            });
-            setMessage('');
-            setIsModalOpen(false);
-          }, 3000);
-        },
-        modal: {
-          ondismiss: function() {
-            setMessage('Payment cancelled');
-            setUiState(prev => ({ ...prev, isSubmitting: false }));
-          }
-        }
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-
-    } catch (error) {
-      console.error('Razorpay payment error:', error);
-      setMessage(`Error: ${error.message}`);
-      setUiState(prev => ({ ...prev, isSubmitting: false }));
-    }
-  };
-
-  // Stripe payment handler
-  const initializeStripePayment = async () => {
-    if (!stripeLoaded) {
-      setMessage('Stripe is still loading. Please try again in a moment.');
-      setUiState(prev => ({ ...prev, isSubmitting: false }));
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/create-stripe-payment`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: formData.amount,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          currency: formData.selectedCurrency,
-          frequency: 'One-time'
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || data.error || 'Failed to process payment');
-      }
-
-      const stripe = window.Stripe('pk_test_51HvTSXFpsHIe6pnDbw5m9BPMOsB2jyH8daLjSU5Bnh58CaRtpTpgCMebRcW06Ccy9rGYP5RM2l1Toz8u3JeWGoGR00WpEFaF5M');
-
-      if (data.type === 'checkout') {
-        stripe.redirectToCheckout({
-          sessionId: data.id
-        }).then(function (result) {
-          if (result.error) {
-            setMessage(`Error: ${result.error.message}`);
-            setUiState(prev => ({ ...prev, isSubmitting: false }));
-          }
-        });
-      }
-
-    } catch (error) {
-      console.error('Stripe payment error:', error);
-      setMessage(`Error: ${error.message}`);
-      setUiState(prev => ({ ...prev, isSubmitting: false }));
-    }
-  };
-
-  // Handle form submission
+  
   const handleSubmit = useCallback(async (e) => {
-    if (e) e.preventDefault();
+    e.preventDefault();
+    if (!areRequiredFieldsFilled()) return;
+    setModalState({ isOpen: true, status: 'loading', message: 'Processing your donation...' });
     
-    if (uiState.isSubmitting) return;
-    
-    const isPhoneValid = validatePhoneNumber(formData.phone, formData.countryCode);
+    // Mock payment processing
+    setTimeout(() => {
+        setModalState({ isOpen: true, status: 'success', message: 'Thank you for your generous donation!' });
+    }, 2000);
+  }, [formData, areRequiredFieldsFilled]);
 
-    if (formData.isIndian && formData.paymentMethod === PaymentMethod.RAZORPAY) {
-      if (!isPhoneValid) {
-        setMessage('Please enter a valid phone number');
-        return;
-      }
-    }
-    
-    if (!areRequiredFieldsFilled()) {
-      setMessage('Please fill in all required fields.');
-      return;
-    }
-    
-    setUiState(prev => ({ ...prev, isSubmitting: true }));
-    setMessage('Processing your donation...');
-    
-    // Initiate payment based on selected payment method
-    if (formData.paymentMethod === PaymentMethod.RAZORPAY) {
-      await initializeRazorpayPayment();
-    } else if (formData.paymentMethod === PaymentMethod.STRIPE) {
-      await initializeStripePayment();
-    }
-  }, [formData, areRequiredFieldsFilled, uiState.isSubmitting]);
-
-  // Handle click outside to close dropdowns
+  // --- Effects ---
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (uiState.showCountryCodeDropdown) {
-        const dropdown = document.querySelector('.country-code-dropdown-container');
-        if (dropdown && !dropdown.contains(event.target)) {
-          setUiState(prev => ({
-            ...prev,
-            showCountryCodeDropdown: false,
-            countryCodeSearchQuery: ''
-          }));
-        }
-      }
-      
-      if (uiState.showCurrencyDropdown) {
-        const dropdown = document.querySelector('.currency-dropdown-container');
-        if (dropdown && !dropdown.contains(event.target)) {
-          setUiState(prev => ({
-            ...prev,
-            showCurrencyDropdown: false,
-            currencySearchQuery: ''
-          }));
-        }
-      }
-      
-      if (uiState.showCountryDropdown) {
-        const dropdown = document.querySelector('.country-dropdown-container');
-        if (dropdown && !dropdown.contains(event.target)) {
-          setUiState(prev => ({
-            ...prev,
-            showCountryDropdown: false,
-            countrySearchQuery: ''
-          }));
-        }
+    const detect = async () => {
+      const location = await detectUserLocation();
+      if (!userChangedDonorType.current) {
+        const isIndian = location.country === 'IN';
+        setFormData(prev => ({ ...prev, isIndian, country: isIndian ? 'India' : 'United States', countryCode: isIndian ? '+91' : '+1', paymentMethod: isIndian ? PaymentMethod.RAZORPAY : PaymentMethod.STRIPE, selectedCurrency: isIndian ? 'INR' : 'USD' }));
       }
     };
+    detect();
+  }, []);
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [uiState.showCountryDropdown, uiState.showCountryCodeDropdown, uiState.showCurrencyDropdown]);
-
-  // Set default amount on load
   useEffect(() => {
+    const defaultAmount = predefinedAmounts[1];
     if (formData.amount === 0) {
-      const amounts = formData.selectedCurrency === 'INR' ? DEFAULT_DONATION_AMOUNTS.INR : DEFAULT_DONATION_AMOUNTS.USD;
-      const defaultAmount = amounts[1]; // Middle value
-      
-      setFormData(prev => ({
-        ...prev,
-        amount: defaultAmount,
-        localAmount: defaultAmount
-      }));
+      handleAmountSelect(defaultAmount);
     }
-  }, [formData.amount, formData.selectedCurrency]);
+  }, [predefinedAmounts, formData.amount, handleAmountSelect]);
 
-  return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#f5f5f5',
-      fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
-    }}>
-      {/* Main Donation Button */}
-      {!isModalOpen && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
-          padding: '20px'
-        }}>
-          <div style={{ textAlign: 'center' }}>
-            <h1 style={{
-              fontSize: '32px',
-              fontWeight: 'bold',
-              color: '#333',
-              marginBottom: '24px'
-            }}>
-              Support Our Cause
-            </h1>
-            <p style={{
-              color: '#666',
-              marginBottom: '32px',
-              maxWidth: '400px'
-            }}>
-              Your donation makes a difference in the lives of those who need it most. Every contribution counts.
-            </p>
-            
-            <button
-              onClick={() => setIsModalOpen(true)}
-              style={{
-                background: 'linear-gradient(to right, #f59e0b, #f97316)',
-                color: 'white',
-                fontWeight: 'bold',
-                padding: '16px 32px',
-                borderRadius: '16px',
-                fontSize: '18px',
-                border: 'none',
-                cursor: 'pointer',
-                boxShadow: '0 10px 25px rgba(245, 158, 11, 0.3)',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                margin: '0 auto'
-              }}
-              onMouseOver={(e) => {
-                e.target.style.transform = 'translateY(-2px)';
-                e.target.style.boxShadow = '0 15px 35px rgba(245, 158, 11, 0.4)';
-              }}
-              onMouseOut={(e) => {
-                e.target.style.transform = 'translateY(0)';
-                e.target.style.boxShadow = '0 10px 25px rgba(245, 158, 11, 0.3)';
-              }}
-            >
-              <Heart style={{ height: '24px', width: '24px', marginRight: '12px' }} />
-              Donate Now
-            </button>
-          </div>
+  const getBackButtonText = () => {
+    if (currentStep === 1) return "Back to Campaign";
+    if (currentStep === 3 && !formData.isIndian) return "Back to Citizenship";
+    return "Back";
+  };
+  
+  // --- UI Components ---
+  const Step1_Citizenship = () => (
+    <div className="max-w-md mx-auto">
+      <div className="bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl p-6 md:p-8">
+        <div className="text-center mb-8">
+          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"><Globe className="h-7 w-7 text-white" /></div>
+          <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">Choose Your Citizenship</h2>
+          <p className="text-gray-500 text-sm">This helps us provide the best payment options.</p>
         </div>
-      )}
+        <div className="space-y-3">
+          <button onClick={() => handleCitizenshipSelect(true)} className="w-full flex items-center p-4 md:p-5 rounded-2xl border bg-white/50 hover:border-yellow-300 hover:bg-yellow-50/50 transition-all group shadow-lg">
+            <span className="text-3xl mr-4">🇮🇳</span>
+            <div className="text-left flex-1">
+              <h3 className="font-semibold text-slate-800 group-hover:text-yellow-600">Indian Citizen</h3>
+              <p className="text-xs text-slate-500 mt-1">Indian passport holder or resident.</p>
+              <p className="text-xs text-emerald-600 mt-1 font-medium">✓ Tax benefits available</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-yellow-500" />
+          </button>
+          <button onClick={() => handleCitizenshipSelect(false)} className="w-full flex items-center p-4 md:p-5 rounded-2xl border bg-white/50 hover:border-blue-300 hover:bg-blue-50/50 transition-all group shadow-lg">
+            <span className="text-3xl mr-4">🌎</span>
+            <div className="text-left flex-1">
+              <h3 className="font-semibold text-slate-800 group-hover:text-blue-600">Foreign Citizen</h3>
+              <p className="text-xs text-slate-500 mt-1">Non-Indian passport holder.</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-500" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
-      {/* Modal Overlay */}
-      {isModalOpen && (
-        <div style={{
-          position: 'fixed',
-          inset: '0',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          zIndex: '50',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '16px'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '24px',
-            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)',
-            maxWidth: '500px',
-            width: '100%',
-            maxHeight: '95vh',
-            overflow: 'auto'
-          }}>
-            
-            {/* Step 1: Citizenship Selection */}
-            {currentStep === 1 && (
-              <div>
-                {/* Header */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '24px 24px 0',
-                  borderBottom: '1px solid #e5e7eb',
-                  paddingBottom: '16px',
-                  marginBottom: '24px'
-                }}>
-                  <button
-                    onClick={() => setIsModalOpen(false)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      color: '#3b82f6',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: '14px'
-                    }}
-                  >
-                    <ArrowLeft style={{ height: '16px', width: '16px', marginRight: '8px' }} />
-                    Back to Campaign
-                  </button>
+  const Step2_PaymentMethod = () => (
+    <div className="max-w-md mx-auto">
+      <div className="bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl p-6 md:p-8">
+        <div className="text-center mb-8">
+          <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"><CreditCard className="h-7 w-7 text-white" /></div>
+          <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">Choose Donation Currency</h2>
+        </div>
+        <div className="space-y-3">
+          <button onClick={() => handlePaymentMethodSelect(PaymentMethod.RAZORPAY)} className="w-full flex items-center p-4 md:p-5 rounded-2xl border bg-white/50 hover:border-indigo-300 hover:bg-indigo-50/50 transition-all group shadow-lg">
+            <div className="mr-4 w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg"><span className="text-2xl text-white font-bold">₹</span></div>
+            <div className="text-left flex-1"><h3 className="font-semibold text-slate-800 group-hover:text-indigo-600">Donate in INR</h3></div>
+            <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-indigo-500" />
+          </button>
+          <button onClick={() => handlePaymentMethodSelect(PaymentMethod.STRIPE)} className="w-full flex items-center p-4 md:p-5 rounded-2xl border bg-white/50 hover:border-emerald-300 hover:bg-emerald-50/50 transition-all group shadow-lg">
+            <div className="mr-4 w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg"><Globe className="h-6 w-6 text-white"/></div>
+            <div className="text-left flex-1"><h3 className="font-semibold text-slate-800 group-hover:text-emerald-600">Donate in Other Currencies</h3></div>
+            <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-emerald-500" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const Step3_DonationForm = () => (
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+      {/* Form Column */}
+      <div className="lg:col-span-3">
+        <div className="bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/30 overflow-hidden">
+            {/* Form Content Here */}
+            <PaymentMethodIndicator />
+            <div className="p-6 md:p-10">
+                {formData.paymentMethod === PaymentMethod.STRIPE && <CurrencySelector />}
+                <AmountOptions />
+                <div className="border-t border-gray-200/50 pt-8 mt-8">
+                    <div className="text-center mb-6">
+                        <h2 className="text-xl lg:text-2xl font-bold text-gray-800 mb-2">Your Details</h2>
+                        <p className="text-gray-500 text-sm">For your donation receipt.</p>
+                    </div>
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <FormField label="Full Name" error={validationErrors.name}><TextInput id="name" value={formData.name} onChange={(e) => handleFormFieldChange('name', e.target.value)} placeholder="Enter your full name" required /></FormField>
+                        <FormField label="Mobile Number" error={validationErrors.phone}><PhoneInput /></FormField>
+                        <FormField label="Email Address" error={validationErrors.email}><TextInput id="email" type="email" value={formData.email} onChange={(e) => handleFormFieldChange('email', e.target.value)} placeholder="Enter your email address" required /></FormField>
+                        <FormField label="Address" error={validationErrors.address}><textarea id="address" value={formData.address} onChange={(e) => handleFormFieldChange('address', e.target.value)} placeholder="Enter your street address" rows="2" className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200/50 bg-white/70 focus:outline-none focus:ring-4 focus:ring-blue-200/50 focus:border-blue-300 shadow-lg" required /></FormField>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <FormField label="City" error={validationErrors.city}><TextInput id="city" value={formData.city} onChange={(e) => handleFormFieldChange('city', e.target.value)} required /></FormField>
+                            <FormField label="State" error={validationErrors.state}><TextInput id="state" value={formData.state} onChange={(e) => handleFormFieldChange('state', e.target.value)} required /></FormField>
+                            <FormField label="Pincode" error={validationErrors.pincode}><TextInput id="pincode" value={formData.pincode} onChange={(e) => handleFormFieldChange('pincode', e.target.value)} required /></FormField>
+                        </div>
+                        {formData.paymentMethod === PaymentMethod.RAZORPAY && <FormField label="PAN Number (for tax benefits)"><TextInput id="panNumber" value={formData.panNumber} onChange={(e) => handleFormFieldChange('panNumber', e.target.value.toUpperCase())} maxLength={10} placeholder="ABCDE1234F" className="uppercase" /></FormField>}
+                        <AnonymousToggle />
+                    </form>
                 </div>
-
-                <div style={{ padding: '0 24px 24px', textAlign: 'center' }}>
-                  <div style={{
-                    width: '64px',
-                    height: '64px',
-                    backgroundColor: '#f59e0b',
-                    borderRadius: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 24px'
-                  }}>
-                    <Globe style={{ height: '32px', width: '32px', color: 'white' }} />
-                  </div>
-                  
-                  <h2 style={{
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    color: '#374151',
-                    marginBottom: '8px'
-                  }}>
-                    Choose Your Citizenship
-                  </h2>
-                  <p style={{
-                    color: '#6b7280',
-                    fontSize: '14px',
-                    marginBottom: '32px'
-                  }}>
-                    This helps us provide the best payment options for you
-                  </p>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <button
-                      onClick={() => handleCitizenshipSelect(true)}
-                      style={{
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '16px',
-                        borderRadius: '12px',
-                        border: '2px solid #f59e0b',
-                        backgroundColor: '#fef3c7',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      <div style={{ fontSize: '32px', marginRight: '16px' }}>🇮🇳</div>
-                      <div style={{ textAlign: 'left', flex: '1' }}>
-                        <h3 style={{
-                          fontWeight: '600',
-                          color: '#d97706',
-                          fontSize: '18px',
-                          marginBottom: '4px'
-                        }}>
-                          Indian Citizen
-                        </h3>
-                        <p style={{
-                          fontSize: '14px',
-                          color: '#6b7280',
-                          marginBottom: '4px'
-                        }}>
-                          Indian passport holder or resident
-                        </p>
-                        <p style={{
-                          fontSize: '12px',
-                          color: '#059669',
-                          fontWeight: '500'
-                        }}>
-                          ✓ Tax benefits available
-                        </p>
-                      </div>
-                      <ChevronRight style={{ height: '20px', width: '20px', color: '#d97706' }} />
+                <div className="mt-10">
+                    <button type="button" onClick={handleSubmit} disabled={uiState.isSubmitting} className="w-full flex items-center justify-center px-8 py-5 rounded-2xl text-xl font-bold transition-all shadow-xl disabled:bg-gray-300 disabled:cursor-not-allowed bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white hover:shadow-2xl">
+                        {uiState.isSubmitting ? <Loader2 className="h-6 w-6" /> : <><Heart className="h-6 w-6 mr-3" /> Donate {currencySymbol}{formData.localAmount.toLocaleString()}</>}
                     </button>
-                    
-                    <button
-                      onClick={() => handleCitizenshipSelect(false)}
-                      style={{
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '16px',
-                        borderRadius: '12px',
-                        border: '1px solid #e5e7eb',
-                        backgroundColor: 'white',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      <div style={{ fontSize: '32px', marginRight: '16px' }}>🌎</div>
-                      <div style={{ textAlign: 'left', flex: '1' }}>
-                        <h3 style={{
-                          fontWeight: '600',
-                          color: '#374151',
-                          fontSize: '18px',
-                          marginBottom: '4px'
-                        }}>
-                          Foreign Citizen
-                        </h3>
-                        <p style={{
-                          fontSize: '14px',
-                          color: '#6b7280'
-                        }}>
-                          Non-Indian passport holder
-                        </p>
-                      </div>
-                    </button>
-                  </div>
                 </div>
-              </div>
-            )}
-
-            {/* Step 2: Currency Selection */}
-            {currentStep === 2 && (
-              <div>
-                {/* Header */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '24px 24px 0',
-                  borderBottom: '1px solid #e5e7eb',
-                  paddingBottom: '16px',
-                  marginBottom: '24px'
-                }}>
-                  <button
-                    onClick={handleBack}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      color: '#3b82f6',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: '14px'
-                    }}
-                  >
-                    <ArrowLeft style={{ height: '16px', width: '16px', marginRight: '8px' }} />
-                    Back to Citizenship
-                  </button>
+            </div>
+        </div>
+      </div>
+      {/* Summary Column */}
+      <div className="hidden lg:block lg:col-span-2">
+        <div className="bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/30 overflow-hidden sticky top-8">
+            <div className="h-56 bg-gradient-to-br from-yellow-400 via-orange-500 to-pink-600 flex items-center justify-center"><Heart className="h-16 w-16 text-white/80" /></div>
+            <div className="p-8">
+                <div className="mb-8 text-center bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-6 border border-yellow-200/50 shadow-lg">
+                    <p className="text-sm text-slate-500 mb-2 font-medium">Your donation amount</p>
+                    <p className="text-4xl font-bold bg-gradient-to-r from-yellow-600 via-orange-600 to-red-600 bg-clip-text text-transparent mb-1">{currencySymbol}{formData.localAmount.toLocaleString()}</p>
+                    <div className="h-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full mt-3"></div>
                 </div>
-
-                <div style={{ padding: '0 24px 24px', textAlign: 'center' }}>
-                  <div style={{
-                    width: '64px',
-                    height: '64px',
-                    backgroundColor: '#f59e0b',
-                    borderRadius: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 24px'
-                  }}>
-                    <CreditCard style={{ height: '32px', width: '32px', color: 'white' }} />
-                  </div>
-                  
-                  <h2 style={{
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    color: '#374151',
-                    marginBottom: '32px'
-                  }}>
-                    Choose Your Donation Currency
-                  </h2>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <button
-                      onClick={() => handlePaymentMethodSelect(PaymentMethod.RAZORPAY)}
-                      style={{
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '16px',
-                        borderRadius: '12px',
-                        border: '2px solid #f59e0b',
-                        backgroundColor: '#fef3c7',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      <div style={{
-                        width: '48px',
-                        height: '48px',
-                        backgroundColor: '#f59e0b',
-                        borderRadius: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginRight: '16px'
-                      }}>
-                        <span style={{ color: 'white', fontWeight: 'bold', fontSize: '18px' }}>₹</span>
-                      </div>
-                      <div style={{ textAlign: 'left', flex: '1' }}>
-                        <h3 style={{
-                          fontWeight: '600',
-                          color: '#d97706',
-                          fontSize: '18px'
-                        }}>
-                          Donate in INR
-                        </h3>
-                      </div>
-                      <ChevronRight style={{ height: '20px', width: '20px', color: '#d97706' }} />
-                    </button>
-
-                    <button
-                      onClick={() => handlePaymentMethodSelect(PaymentMethod.STRIPE)}
-                      style={{
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '16px',
-                        borderRadius: '12px',
-                        border: '1px solid #e5e7eb',
-                        backgroundColor: 'white',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      <div style={{
-                        width: '48px',
-                        height: '48px',
-                        backgroundColor: '#f59e0b',
-                        borderRadius: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginRight: '16px'
-                      }}>
-                        <Globe style={{ height: '24px', width: '24px', color: 'white' }} />
-                      </div>
-                      <div style={{ textAlign: 'left', flex: '1' }}>
-                        <h3 style={{
-                          fontWeight: '600',
-                          color: '#374151',
-                          fontSize: '18px'
-                        }}>
-                          Donate in Other Currencies
-                        </h3>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: Donation Form */}
-            {currentStep === 3 && (
-              <div>
-                {/* Header */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '24px 24px 0',
-                  borderBottom: '1px solid #e5e7eb',
-                  paddingBottom: '16px',
-                  marginBottom: '24px'
-                }}>
-                  <button
-                    onClick={handleBack}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      color: '#3b82f6',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: '14px'
-                    }}
-                  >
-                    <ArrowLeft style={{ height: '16px', width: '16px', marginRight: '8px' }} />
-                    {formData.isIndian ? "Back to Payment Gateway" : "Back to Citizenship"}
-                  </button>
-                </div>
-
-                <div style={{ padding: '0 24px 24px' }}>
-                  {/* Payment Method Header */}
-                  <div style={{
-                    background: 'linear-gradient(to right, #f59e0b, #f97316)',
-                    color: 'white',
-                    padding: '16px',
-                    borderRadius: '16px',
-                    marginBottom: '24px'
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <div style={{
-                          width: '32px',
-                          height: '32px',
-                          backgroundColor: 'rgba(255,255,255,0.2)',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          marginRight: '12px'
-                        }}>
-                          <span style={{ fontWeight: 'bold' }}>
-                            {formData.paymentMethod === PaymentMethod.RAZORPAY ? '₹' : getCurrencySymbol(formData.selectedCurrency)}
-                          </span>
-                        </div>
-                        <div>
-                          <p style={{
-                            fontWeight: 'bold',
-                            fontSize: '14px',
-                            marginBottom: '2px'
-                          }}>
-                            {formData.isIndian 
-                              ? (formData.paymentMethod === PaymentMethod.RAZORPAY 
-                                ? 'Indian Citizen - INR Payment' 
-                                : 'Indian Citizen - International Payment')
-                              : 'Foreign Citizen'}
-                          </p>
-                          <p style={{
-                            fontSize: '12px',
-                            opacity: '0.8',
-                            margin: '0'
-                          }}>
-                            {formData.paymentMethod === PaymentMethod.RAZORPAY 
-                              ? 'Secure payment via Razorpay in INR' 
-                              : `International payment via Stripe in ${formData.selectedCurrency}`}
-                          </p>
-                        </div>
-                      </div>
-                      {formData.isIndian && (
-                        <button 
-                          onClick={() => setCurrentStep(2)}
-                          style={{
-                            fontSize: '12px',
-                            color: 'white',
-                            backgroundColor: 'rgba(255,255,255,0.1)',
-                            padding: '6px 12px',
-                            borderRadius: '20px',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Change
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Currency Selector - Only for Stripe */}
-                  {formData.paymentMethod === PaymentMethod.STRIPE && (
-                    <div style={{ marginBottom: '24px' }}>
-                      <label style={{
-                        display: 'block',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        color: '#374151',
-                        marginBottom: '8px'
-                      }}>
-                        Currency <span style={{ color: '#ef4444' }}>*</span>
-                      </label>
-                      <div className="currency-dropdown-container" style={{ position: 'relative' }}>
-                        <button
-                          type="button"
-                          onClick={toggleCurrencyDropdown}
-                          style={{
-                            width: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '12px 16px',
-                            borderRadius: '12px',
-                            border: '2px solid #e5e7eb',
-                            backgroundColor: 'white',
-                            cursor: 'pointer',
-                            fontSize: '16px'
-                          }}
-                        >
-                          <span style={{ display: 'flex', alignItems: 'center' }}>
-                            <span style={{ marginRight: '8px', fontSize: '18px' }}>{currencySymbol}</span>
-                            <span style={{ fontWeight: '600', color: '#374151' }}>{formData.selectedCurrency}</span>
-                            <span style={{ marginLeft: '8px', color: '#6b7280', fontSize: '14px' }}>
-                              - {AVAILABLE_CURRENCIES.find(c => c.code === formData.selectedCurrency)?.name}
-                            </span>
-                          </span>
-                          <ChevronDown style={{ height: '16px', width: '16px', color: '#6b7280' }} />
-                        </button>
-                        
-                        {uiState.showCurrencyDropdown && (
-                          <div style={{
-                            position: 'absolute',
-                            zIndex: '10',
-                            marginTop: '8px',
-                            width: '100%',
-                            backgroundColor: 'white',
-                            borderRadius: '12px',
-                            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-                            border: '1px solid #e5e7eb',
-                            maxHeight: '256px',
-                            overflowY: 'auto'
-                          }}>
-                            <div style={{
-                              padding: '8px',
-                              borderBottom: '1px solid #e5e7eb'
-                            }}>
-                              <input
-                                type="text"
-                                value={uiState.currencySearchQuery}
-                                onChange={(e) => setUiState(prev => ({ ...prev, currencySearchQuery: e.target.value }))}
-                                placeholder="Search currency..."
-                                style={{
-                                  width: '100%',
-                                  padding: '8px 12px',
-                                  borderRadius: '8px',
-                                  border: '1px solid #e5e7eb',
-                                  fontSize: '14px'
-                                }}
-                              />
-                            </div>
-                            <div style={{ padding: '4px' }}>
-                              {filteredCurrencies.map((currency) => (
-                                <button
-                                  key={currency.code}
-                                  type="button"
-                                  onClick={() => handleCurrencySelect(currency.code)}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    width: '100%',
-                                    padding: '12px 16px',
-                                    textAlign: 'left',
-                                    fontSize: '14px',
-                                    border: 'none',
-                                    backgroundColor: 'transparent',
-                                    cursor: 'pointer',
-                                    borderRadius: '8px'
-                                  }}
-                                  onMouseOver={(e) => e.target.style.backgroundColor = '#f3f4f6'}
-                                  onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
-                                >
-                                  <span style={{ marginRight: '12px', fontSize: '18px' }}>{currency.symbol}</span>
-                                  <span style={{ fontWeight: '500', color: '#374151' }}>{currency.code}</span>
-                                  <span style={{ marginLeft: '8px', color: '#6b7280' }}>- {currency.name}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Amount Selection */}
-                  <div style={{ marginBottom: '24px' }}>
-                    <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                      <h2 style={{
-                        fontSize: '20px',
-                        fontWeight: 'bold',
-                        color: '#374151',
-                        marginBottom: '8px'
-                      }}>
-                        Choose Your Donation Amount
-                      </h2>
-                      <p style={{
-                        color: '#6b7280',
-                        fontSize: '14px'
-                      }}>
-                        Every contribution makes a meaningful difference
-                      </p>
-                    </div>
-                    
-                    {/* Amount buttons */}
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(3, 1fr)',
-                      gap: '12px',
-                      marginBottom: '16px'
-                    }}>
-                      {predefinedAmounts.map((amount, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          onClick={() => handleAmountSelect(amount)}
-                          style={{
-                            position: 'relative',
-                            padding: '16px 12px',
-                            borderRadius: '12px',
-                            border: Math.round(Number(formData.localAmount)) === Math.round(Number(amount)) && !uiState.isCustomAmount
-                              ? '2px solid #f59e0b'
-                              : '1px solid #e5e7eb',
-                            backgroundColor: Math.round(Number(formData.localAmount)) === Math.round(Number(amount)) && !uiState.isCustomAmount
-                              ? '#f59e0b'
-                              : 'white',
-                            color: Math.round(Number(formData.localAmount)) === Math.round(Number(amount)) && !uiState.isCustomAmount
-                              ? 'white'
-                              : '#374151',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            fontSize: '16px',
-                            transition: 'all 0.2s ease'
-                          }}
-                        >
-                          {index === 1 && (
-                            <div style={{
-                              position: 'absolute',
-                              top: '-4px',
-                              left: '0',
-                              right: '0',
-                              display: 'flex',
-                              justifyContent: 'center'
-                            }}>
-                              <span style={{
-                                backgroundColor: '#10b981',
-                                fontSize: '10px',
-                                fontWeight: 'bold',
-                                padding: '2px 8px',
-                                borderRadius: '20px',
-                                color: 'white',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                              }}>
-                                <Star style={{ height: '10px', width: '10px' }} />
-                                Popular
-                              </span>
-                            </div>
-                          )}
-                          {currencySymbol}{Math.round(Number(amount)).toLocaleString()}
-                        </button>
-                      ))}
-                    </div>
-                    
-                    {/* Custom Amount Input */}
-                    <div style={{ position: 'relative' }}>
-                      <input
-                        type="number"
-                        value={formData.customAmount}
-                        onChange={(e) => handleCustomAmount(e.target.value)}
-                        placeholder="Enter custom amount"
-                        min="1"
-                        step="1"
-                        style={{
-                          width: '100%',
-                          paddingLeft: '48px',
-                          paddingRight: '60px',
-                          paddingTop: '12px',
-                          paddingBottom: '12px',
-                          borderRadius: '12px',
-                          border: uiState.isCustomAmount 
-                            ? '2px solid #f59e0b' 
-                            : '2px solid #e5e7eb',
-                          backgroundColor: uiState.isCustomAmount ? '#fef3c7' : 'white',
-                          fontSize: '16px',
-                          outline: 'none'
-                        }}
-                      />
-                      <div style={{
-                        position: 'absolute',
-                        left: '16px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        color: '#6b7280',
-                        fontWeight: 'bold',
-                        pointerEvents: 'none'
-                      }}>
-                        {currencySymbol}
-                      </div>
-                      <div style={{
-                        position: 'absolute',
-                        right: '16px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        color: '#9ca3af',
-                        fontSize: '14px',
-                        pointerEvents: 'none'
-                      }}>
-                        {formData.selectedCurrency}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Personal Details */}
-                  <div style={{ marginBottom: '24px' }}>
-                    <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                      <h2 style={{
-                        fontSize: '20px',
-                        fontWeight: 'bold',
-                        color: '#374151',
-                        marginBottom: '8px'
-                      }}>
-                        Your Details
-                      </h2>
-                      <p style={{
-                        color: '#6b7280',
-                        fontSize: '14px'
-                      }}>
-                        We'll use this information for your donation receipt
-                      </p>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      {/* Name */}
-                      <div>
-                        <label style={{
-                          display: 'block',
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          color: '#374151',
-                          marginBottom: '6px'
-                        }}>
-                          Full Name <span style={{ color: '#ef4444' }}>*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.name}
-                          onChange={(e) => handleFormFieldChange('name', e.target.value)}
-                          placeholder="Enter your full name"
-                          style={{
-                            width: '100%',
-                            padding: '12px 16px',
-                            borderRadius: '12px',
-                            border: '2px solid #e5e7eb',
-                            fontSize: '16px',
-                            outline: 'none'
-                          }}
-                          required
-                        />
-                      </div>
-                      
-                      {/* Phone Number */}
-                      <div>
-                        <label style={{
-                          display: 'block',
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          color: '#374151',
-                          marginBottom: '6px'
-                        }}>
-                          Mobile Number <span style={{ color: '#ef4444' }}>*</span>
-                        </label>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          {/* Country Code Dropdown */}
-                          <div className="country-code-dropdown-container" style={{ position: 'relative', width: '80px', flexShrink: '0' }}>
-                            <button
-                              type="button"
-                              onClick={toggleCountryCodeDropdown}
-                              style={{
-                                width: '100%',
-                                height: '48px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                padding: '0 8px',
-                                borderRadius: '12px',
-                                border: '2px solid #e5e7eb',
-                                backgroundColor: 'white',
-                                cursor: 'pointer',
-                                fontSize: '12px',
-                                fontWeight: '600'
-                              }}
-                            >
-                              {formData.countryCode}
-                            </button>
-                            
-                            {uiState.showCountryCodeDropdown && (
-                              <div style={{
-                                position: 'absolute',
-                                zIndex: '30',
-                                marginTop: '8px',
-                                width: '256px',
-                                backgroundColor: 'white',
-                                borderRadius: '12px',
-                                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-                                border: '1px solid #e5e7eb',
-                                maxHeight: '192px',
-                                overflowY: 'auto',
-                                left: '0'
-                              }}>
-                                <div style={{
-                                  padding: '8px',
-                                  borderBottom: '1px solid #e5e7eb'
-                                }}>
-                                  <input
-                                    type="text"
-                                    value={uiState.countryCodeSearchQuery}
-                                    onChange={(e) => setUiState(prev => ({ ...prev, countryCodeSearchQuery: e.target.value }))}
-                                    placeholder="Search country..."
-                                    style={{
-                                      width: '100%',
-                                      padding: '8px 12px',
-                                      borderRadius: '8px',
-                                      border: '1px solid #e5e7eb',
-                                      fontSize: '14px'
-                                    }}
-                                  />
-                                </div>
-                                <div style={{ padding: '4px' }}>
-                                  {filteredCountryCodes.map((countryCode) => (
-                                    <button
-                                      key={countryCode.code + countryCode.country}
-                                      type="button"
-                                      onClick={() => selectCountryCode(countryCode)}
-                                      style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        width: '100%',
-                                        padding: '8px 12px',
-                                        textAlign: 'left',
-                                        fontSize: '14px',
-                                        border: 'none',
-                                        backgroundColor: 'transparent',
-                                        cursor: 'pointer',
-                                        borderRadius: '6px'
-                                      }}
-                                      onMouseOver={(e) => e.target.style.backgroundColor = '#f3f4f6'}
-                                      onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
-                                    >
-                                      <span style={{ marginRight: '8px', fontSize: '16px' }}>{countryCode.flag}</span>
-                                      <span style={{ fontSize: '12px', color: '#6b7280', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{countryCode.country}</span>
-                                      <span style={{ marginLeft: 'auto', fontWeight: '600', color: '#374151', fontSize: '12px' }}>{countryCode.code}</span>
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                          
-                          {/* Phone Input */}
-                          <div style={{ flex: '1', minWidth: '0' }}>
-                            <input
-                              type="tel"
-                              value={formData.phone}
-                              onChange={handlePhoneChange}
-                              placeholder="Enter your mobile number"
-                              style={{
-                                width: '100%',
-                                height: '48px',
-                                padding: '0 16px',
-                                borderRadius: '12px',
-                                border: hasTouchedPhone && phoneError
-                                  ? '2px solid #ef4444'
-                                  : '2px solid #e5e7eb',
-                                fontSize: '16px',
-                                outline: 'none'
-                              }}
-                              required
-                            />
-                          </div>
-                        </div>
-                        {hasTouchedPhone && phoneError && (
-                          <p style={{
-                            fontSize: '12px',
-                            color: '#ef4444',
-                            marginTop: '4px'
-                          }}>
-                            {phoneError}
-                          </p>
-                        )}
-                      </div>
-                      
-                      {/* Email */}
-                      <div>
-                        <label style={{
-                          display: 'block',
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          color: '#374151',
-                          marginBottom: '6px'
-                        }}>
-                          Email Address <span style={{ color: '#ef4444' }}>*</span>
-                        </label>
-                        <input
-                          type="email"
-                          value={formData.email}
-                          onChange={handleEmailChange}
-                          onBlur={handleEmailBlur}
-                          placeholder="Enter your email address"
-                          style={{
-                            width: '100%',
-                            padding: '12px 16px',
-                            borderRadius: '12px',
-                            border: hasEmailTouched && emailError
-                              ? '2px solid #ef4444'
-                              : '2px solid #e5e7eb',
-                            fontSize: '16px',
-                            outline: 'none'
-                          }}
-                          required
-                        />
-                        {hasEmailTouched && emailError && (
-                          <p style={{
-                            fontSize: '12px',
-                            color: '#ef4444',
-                            marginTop: '4px'
-                          }}>
-                            {emailError}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Address */}
-                      <div>
-                        <label style={{
-                          display: 'block',
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          color: '#374151',
-                          marginBottom: '6px'
-                        }}>
-                          Address <span style={{ color: '#ef4444' }}>*</span>
-                        </label>
-                        <textarea
-                          value={formData.address}
-                          onChange={(e) => handleFormFieldChange('address', e.target.value)}
-                          placeholder="Enter your street address"
-                          rows={2}
-                          style={{
-                            width: '100%',
-                            padding: '12px 16px',
-                            borderRadius: '12px',
-                            border: '2px solid #e5e7eb',
-                            fontSize: '16px',
-                            outline: 'none',
-                            resize: 'none'
-                          }}
-                          required
-                        />
-                      </div>
-                      
-                      {/* City */}
-                      <div>
-                        <label style={{
-                          display: 'block',
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          color: '#374151',
-                          marginBottom: '6px'
-                        }}>
-                          City <span style={{ color: '#ef4444' }}>*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.city}
-                          onChange={(e) => handleFormFieldChange('city', e.target.value)}
-                          placeholder="Enter your city"
-                          style={{
-                            width: '100%',
-                            padding: '12px 16px',
-                            borderRadius: '12px',
-                            border: '2px solid #e5e7eb',
-                            fontSize: '16px',
-                            outline: 'none'
-                          }}
-                          required
-                        />
-                      </div>
-                      
-                      {/* State */}
-                      <div>
-                        <label style={{
-                          display: 'block',
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          color: '#374151',
-                          marginBottom: '6px'
-                        }}>
-                          State <span style={{ color: '#ef4444' }}>*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.state}
-                          onChange={(e) => handleFormFieldChange('state', e.target.value)}
-                          placeholder="Enter your state"
-                          style={{
-                            width: '100%',
-                            padding: '12px 16px',
-                            borderRadius: '12px',
-                            border: '2px solid #e5e7eb',
-                            fontSize: '16px',
-                            outline: 'none'
-                          }}
-                          required
-                        />
-                      </div>
-                      
-                      {/* Pincode */}
-                      <div>
-                        <label style={{
-                          display: 'block',
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          color: '#374151',
-                          marginBottom: '6px'
-                        }}>
-                          {formData.country === "India" ? "Pin Code" : "Zip Code"} <span style={{ color: '#ef4444' }}>*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.pincode}
-                          onChange={handlePincodeChange}
-                          placeholder={formData.country === "India" ? "eg : 110001" : "eg : 10001"}
-                          maxLength={formData.country === "India" ? 6 : 10}
-                          style={{
-                            width: '100%',
-                            padding: '12px 16px',
-                            borderRadius: '12px',
-                            border: '2px solid #e5e7eb',
-                            fontSize: '16px',
-                            outline: 'none'
-                          }}
-                          required
-                        />
-                      </div>
-
-                      {/* PAN Number (Only for Razorpay) */}
-                      {formData.paymentMethod === PaymentMethod.RAZORPAY && (
-                        <div>
-                          <label style={{
-                            display: 'block',
-                            fontSize: '14px',
-                            fontWeight: '600',
-                            color: '#374151',
-                            marginBottom: '6px'
-                          }}>
-                            PAN Number (If you want to avail 80G tax exemption, please provide PAN )
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.panNumber}
-                            placeholder="ENTER PAN NUMBER (E.G., ABCTY1234D)"
-                            onChange={handlePanNumberChange}
-                            maxLength={10}
-                            style={{
-                              width: '100%',
-                              padding: '12px 16px',
-                              borderRadius: '12px',
-                              border: '2px solid #e5e7eb',
-                              fontSize: '16px',
-                              outline: 'none',
-                              textTransform: 'uppercase'
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      {/* Country Dropdown (For international) */}
-                      {formData.paymentMethod !== PaymentMethod.RAZORPAY && (
-                        <div>
-                          <label style={{
-                            display: 'block',
-                            fontSize: '14px',
-                            fontWeight: '600',
-                            color: '#374151',
-                            marginBottom: '6px'
-                          }}>
-                            Country <span style={{ color: '#ef4444' }}>*</span>
-                          </label>
-                          <div className="country-dropdown-container" style={{ position: 'relative' }}>
-                            <button
-                              type="button"
-                              onClick={toggleCountryDropdown}
-                              style={{
-                                width: '100%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                padding: '12px 16px',
-                                borderRadius: '12px',
-                                border: '2px solid #e5e7eb',
-                                backgroundColor: 'white',
-                                cursor: 'pointer',
-                                fontSize: '16px'
-                              }}
-                            >
-                              <span style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ marginRight: '12px', fontSize: '18px' }}>
-                                  {COUNTRIES.find(c => c.name === formData.country)?.flag || '🌎'}
-                                </span>
-                                <span style={{ fontWeight: '600', color: '#374151' }}>{formData.country}</span>
-                              </span>
-                              <ChevronDown style={{ height: '16px', width: '16px', color: '#6b7280' }} />
-                            </button>
-                            
-                            {uiState.showCountryDropdown && (
-                              <div style={{
-                                position: 'absolute',
-                                zIndex: '10',
-                                marginTop: '8px',
-                                width: '100%',
-                                backgroundColor: 'white',
-                                borderRadius: '12px',
-                                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-                                border: '1px solid #e5e7eb',
-                                maxHeight: '192px',
-                                overflowY: 'auto'
-                              }}>
-                                <div style={{
-                                  padding: '8px',
-                                  borderBottom: '1px solid #e5e7eb'
-                                }}>
-                                  <input
-                                    type="text"
-                                    value={uiState.countrySearchQuery}
-                                    onChange={(e) => setUiState(prev => ({ ...prev, countrySearchQuery: e.target.value }))}
-                                    placeholder="Search country..."
-                                    style={{
-                                      width: '100%',
-                                      padding: '8px 12px',
-                                      borderRadius: '8px',
-                                      border: '1px solid #e5e7eb',
-                                      fontSize: '14px'
-                                    }}
-                                  />
-                                </div>
-                                <div style={{ padding: '4px' }}>
-                                  {filteredCountries.map((country) => (
-                                    <button
-                                      key={country.code}
-                                      type="button"
-                                      onClick={() => selectCountry(country)}
-                                      style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        width: '100%',
-                                        padding: '8px 16px',
-                                        textAlign: 'left',
-                                        fontSize: '14px',
-                                        border: 'none',
-                                        backgroundColor: 'transparent',
-                                        cursor: 'pointer',
-                                        borderRadius: '6px'
-                                      }}
-                                      onMouseOver={(e) => e.target.style.backgroundColor = '#f3f4f6'}
-                                      onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
-                                    >
-                                      <span style={{ marginRight: '12px', fontSize: '18px' }}>{country.flag}</span>
-                                      <span style={{ color: '#374151', fontWeight: '500' }}>{country.name}</span>
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Anonymous Donation Checkbox */}
-                      <div style={{ marginTop: '16px' }}>
-                        <label style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          cursor: 'pointer'
-                        }}>
-                          <div style={{ position: 'relative' }}>
-                            <input 
-                              type="checkbox" 
-                              checked={formData.isAnonymous}
-                              onChange={(e) => handleAnonymousToggle(e.target.checked)}
-                              style={{ display: 'none' }}
-                            />
-                            <div style={{
-                              width: '16px',
-                              height: '16px',
-                              borderRadius: '4px',
-                              border: '2px solid ' + (formData.isAnonymous ? '#3b82f6' : '#d1d5db'),
-                              backgroundColor: formData.isAnonymous ? '#3b82f6' : 'white',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}>
-                              {formData.isAnonymous && (
-                                <CheckCircle style={{ height: '16px', width: '16px', color: 'white' }} />
-                              )}
-                            </div>
-                          </div>
-                          <span style={{
-                            marginLeft: '12px',
-                            fontSize: '14px',
-                            color: '#374151'
-                          }}>
-                            Make my donation anonymous ( your name won't be displayed publicly )
-                          </span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Donate Button */}
-                  <button
-                    type="button"
-                    onClick={handleSubmit}
-                    disabled={!areRequiredFieldsFilled() || uiState.isSubmitting}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '16px 24px',
-                      borderRadius: '12px',
-                      fontSize: '18px',
-                      fontWeight: 'bold',
-                      border: 'none',
-                      cursor: areRequiredFieldsFilled() && !uiState.isSubmitting ? 'pointer' : 'not-allowed',
-                      backgroundColor: areRequiredFieldsFilled() && !uiState.isSubmitting
-                        ? '#e5e7eb'
-                        : '#e5e7eb',
-                      color: areRequiredFieldsFilled() && !uiState.isSubmitting
-                        ? '#374151'
-                        : '#9ca3af',
-                      marginBottom: '16px',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseOver={(e) => {
-                      if (areRequiredFieldsFilled() && !uiState.isSubmitting) {
-                        e.target.style.backgroundColor = '#f59e0b';
-                        e.target.style.color = 'white';
-                      }
-                    }}
-                    onMouseOut={(e) => {
-                      if (areRequiredFieldsFilled() && !uiState.isSubmitting) {
-                        e.target.style.backgroundColor = '#e5e7eb';
-                        e.target.style.color = '#374151';
-                      }
-                    }}
-                  >
-                    {uiState.isSubmitting ? (
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <Loader2 style={{ animation: 'spin 1s linear infinite', height: '20px', width: '20px', marginRight: '12px' }} />
-                        Processing...
-                      </div>
-                    ) : (
-                      <span style={{ display: 'flex', alignItems: 'center' }}>
-                        <Heart style={{ height: '20px', width: '20px', marginRight: '12px' }} />
-                        Donate {currencySymbol}{Math.round(formData.localAmount).toLocaleString()}
-                      </span>
-                    )}
-                  </button>
-
-                  {/* Security Notice */}
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    marginBottom: '16px'
-                  }}>
-                    <div style={{
-                      backgroundColor: '#f3f4f6',
-                      borderRadius: '12px',
-                      padding: '8px 16px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      fontSize: '14px',
-                      color: '#374151'
-                    }}>
-                      <Lock style={{ height: '16px', width: '16px', marginRight: '8px', color: '#10b981' }} />
-                      <span style={{ marginRight: '8px' }}>Secure payment powered by</span>
-                      {formData.paymentMethod === PaymentMethod.RAZORPAY 
-                        ? <span style={{ backgroundColor: '#6366f1', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>Razorpay</span>
-                        : <span style={{ backgroundColor: '#3b82f6', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>Stripe</span>}
-                    </div>
-                  </div>
-
-                  {/* Trust Badges */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: '12px'
-                  }}>
+                 <div className="mt-8 grid grid-cols-3 gap-4">
                     {TRUST_BADGES.map((badge, index) => (
-                      <div key={index} style={{
-                        backgroundColor: 'white',
-                        borderRadius: '12px',
-                        padding: '12px',
-                        textAlign: 'center',
-                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                        border: '1px solid #f3f4f6'
-                      }}>
-                        <div style={{
-                          width: '32px',
-                          height: '32px',
-                          backgroundColor: '#fef3c7',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          margin: '0 auto 8px'
-                        }}>
-                          <badge.icon style={{ height: '16px', width: '16px', color: '#f59e0b' }} />
-                        </div>
-                        <h4 style={{
-                          fontSize: '12px',
-                          fontWeight: 'bold',
-                          color: '#374151',
-                          marginBottom: '2px'
-                        }}>
-                          {badge.title}
-                        </h4>
-                        <p style={{
-                          fontSize: '10px',
-                          color: '#6b7280'
-                        }}>
-                          {badge.description}
-                        </p>
+                      <div key={index} className="bg-white/70 backdrop-blur-md rounded-2xl p-5 text-center flex flex-col items-center shadow-lg border border-white/30">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-3 shadow-lg"><badge.icon className="h-6 w-6 text-white" /></div>
+                        <h4 className="text-sm font-bold text-slate-700">{badge.title}</h4>
                       </div>
                     ))}
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Message Display */}
-            {message && (
-              <div style={{
-                margin: '16px 24px',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                textAlign: 'center',
-                fontSize: '14px',
-                fontWeight: '500',
-                ...(message.includes('successful') || message.includes('Thank you') 
-                  ? { backgroundColor: '#d1fae5', color: '#065f46', border: '1px solid #a7f3d0' }
-                  : message.includes('Error') || message.includes('cancelled') 
-                  ? { backgroundColor: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5' }
-                  : { backgroundColor: '#dbeafe', color: '#1e40af', border: '1px solid #93c5fd' })
-              }}>
-                {message}
-              </div>
-            )}
-          </div>
+            </div>
         </div>
-      )}
+      </div>
+    </div>
+  );
+
+  // --- Sub-Components for Step 3 ---
+  const PaymentMethodIndicator = () => (
+    <div className={`p-6 text-white ${formData.paymentMethod === PaymentMethod.RAZORPAY ? 'bg-gradient-to-r from-indigo-600 to-pink-600' : 'bg-gradient-to-r from-emerald-500 to-cyan-600'}`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+            <div className="h-12 w-12 bg-white/20 rounded-2xl flex items-center justify-center mr-4 shadow-lg"><span className="font-bold text-lg">{currencySymbol}</span></div>
+            <div>
+                <p className="font-bold text-lg">{formData.isIndian ? 'Indian Citizen' : 'Foreign Citizen'}</p>
+                <p className="text-sm text-white/80 mt-1">Payment via {formData.paymentMethod === PaymentMethod.RAZORPAY ? 'Razorpay' : 'Stripe'} in {formData.selectedCurrency}</p>
+            </div>
+        </div>
+        {formData.isIndian && <button onClick={() => setCurrentStep(2)} className="text-sm text-white/80 hover:text-white bg-white/10 px-4 py-2 rounded-full border border-white/20">Change</button>}
+      </div>
+    </div>
+  );
+
+  const CurrencySelector = () => {
+    const selectedCurrencyInfo = useMemo(() => AVAILABLE_CURRENCIES.find(c => c.code === formData.selectedCurrency), [formData.selectedCurrency]);
+    
+    return (
+        <div className="mb-6">
+            <label className="block text-sm font-semibold text-slate-700 mb-2">Currency <span className="text-rose-500">*</span></label>
+            <div className="relative dropdown-container">
+                <button type="button" onClick={() => setUiState(p => ({...p, showCurrencyDropdown: !p.showCurrencyDropdown}))} className="w-full flex items-center justify-between px-5 py-4 rounded-2xl border-2 border-gray-200/50 bg-white/70 shadow-lg">
+                    <span>
+                        <span className="mr-2 text-xl">{currencySymbol}</span>
+                        <span className="font-semibold text-slate-700">{formData.selectedCurrency}</span>
+                        <span className="ml-2 text-gray-500">- {selectedCurrencyInfo?.name}</span>
+                    </span>
+                    <ChevronDown className="h-5 w-5 text-slate-400" />
+                </button>
+                {uiState.showCurrencyDropdown && (
+                    <div className="absolute z-10 mt-2 w-full bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 max-h-64 overflow-y-auto">
+                        <div className="p-2 sticky top-0 bg-white/95 border-b"><input type="text" value={uiState.currencySearchQuery} onChange={e => setUiState(p => ({...p, currencySearchQuery: e.target.value}))} placeholder="Search..." className="w-full px-3 py-2 rounded-lg border"/></div>
+                        <div className="py-1">
+                            {filteredCurrencies.map(c => <button key={c.code} type="button" onClick={() => { handleFormFieldChange('selectedCurrency', c.code); setUiState(p => ({...p, showCurrencyDropdown: false})); }} className="flex items-center w-full px-4 py-3 text-left text-sm hover:bg-blue-50/50"><span>{c.symbol}</span><span className="ml-3 font-medium">{c.code}</span><span className="ml-2 text-gray-500">- {c.name}</span></button>)}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+  };
+  
+  const AmountOptions = () => (
+    <div className="mb-10">
+        <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Choose Your Donation Amount</h2>
+            <p className="text-gray-500">Every contribution makes a difference.</p>
+        </div>
+        <div className="grid grid-cols-3 gap-4 mb-6">
+            {predefinedAmounts.map((amount, index) => (
+                <button key={index} type="button" onClick={() => handleAmountSelect(amount)} className={`relative py-4 px-4 rounded-2xl transition-all shadow-lg ${formData.localAmount === amount && !uiState.isCustomAmount ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-yellow-200/50' : 'bg-white/70 hover:bg-gray-100/50'}`}>
+                    {index === 1 && <div className="absolute -top-2 left-0 right-0 flex justify-center"><span className="bg-gradient-to-r from-emerald-500 to-teal-600 text-xs font-bold px-3 py-0.5 rounded-full text-white shadow-lg flex items-center gap-1"><Star className="h-2.5 w-2.5"/>Popular</span></div>}
+                    <div className="text-xl font-bold">{currencySymbol}{amount.toLocaleString()}</div>
+                </button>
+            ))}
+        </div>
+        <div className="relative">
+            <input type="number" value={formData.customAmount} onChange={(e) => handleCustomAmount(e.target.value)} placeholder="Enter custom amount" min="1" className={`w-full pl-16 pr-6 py-5 rounded-2xl border-2 text-lg shadow-lg ${uiState.isCustomAmount ? 'border-yellow-300 bg-yellow-50/50' : 'border-gray-200/50 bg-white/70'}`} />
+            <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none"><span className="text-gray-500 font-bold text-xl">{currencySymbol}</span></div>
+        </div>
+    </div>
+  );
+  
+  const FormField = ({ label, children, error }) => (
+    <div>
+        <label className="block text-sm font-semibold text-slate-700 mb-2">{label} <span className="text-rose-500">*</span></label>
+        {children}
+        {error && <p className="text-xs text-rose-500 mt-2 font-medium">{error}</p>}
+    </div>
+  );
+  
+  const TextInput = ({ id, value, onChange, placeholder, required, type = "text", className = "" }) => (
+    <input id={id} type={type} value={value} onChange={onChange} placeholder={placeholder} required={required} className={`w-full px-5 py-4 rounded-2xl border-2 border-gray-200/50 bg-white/70 focus:outline-none focus:ring-4 focus:ring-blue-200/50 focus:border-blue-300 shadow-lg ${className}`} />
+  );
+
+  const PhoneInput = () => (
+    <div className="flex space-x-3">
+        <div className="relative dropdown-container w-28 flex-shrink-0">
+            <button type="button" onClick={() => setUiState(p => ({...p, showCountryCodeDropdown: !p.showCountryCodeDropdown}))} className="w-full h-full flex items-center justify-between px-4 rounded-2xl border-2 border-gray-200/50 bg-white/70 shadow-lg">
+                <span className="text-sm font-semibold truncate">{formData.countryCode}</span>
+                <ChevronDown className="h-4 w-4 ml-1 text-slate-400" />
+            </button>
+            {uiState.showCountryCodeDropdown && (
+                <div className="absolute z-30 mt-2 w-72 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border max-h-64 overflow-y-auto">
+                    <div className="p-2 sticky top-0 bg-white/95 border-b"><input type="text" value={uiState.countryCodeSearchQuery} onChange={e => setUiState(p => ({...p, countryCodeSearchQuery: e.target.value}))} placeholder="Search..." className="w-full px-3 py-2 rounded-lg border"/></div>
+                    <div className="py-1">
+                        {filteredCountryCodes.map(c => <button key={c.code+c.country} type="button" onClick={() => { handleFormFieldChange('countryCode', c.code); setUiState(p => ({...p, showCountryCodeDropdown: false})); }} className="flex items-center w-full px-4 py-3 text-left text-sm hover:bg-blue-50/50"><span className="mr-3 text-lg">{c.flag}</span><span className="truncate max-w-[120px]">{c.country}</span><span className="ml-auto font-semibold">{c.code}</span></button>)}
+                    </div>
+                </div>
+            )}
+        </div>
+        <div className="flex-1 min-w-0">
+            <TextInput id="phone" type="tel" value={formData.phone} onChange={(e) => handleFormFieldChange('phone', e.target.value)} placeholder="Enter mobile number" required />
+        </div>
+    </div>
+  );
+  
+  const AnonymousToggle = () => (
+    <label className="flex items-center group cursor-pointer">
+        <div className="relative">
+            <input type="checkbox" checked={formData.isAnonymous} onChange={(e) => handleFormFieldChange('isAnonymous', e.target.checked)} className="sr-only" />
+            <div className={`w-5 h-5 rounded-lg border-2 transition-all ${formData.isAnonymous ? 'bg-blue-500 border-blue-500' : 'bg-white border-gray-300'}`}>
+                {formData.isAnonymous && <CheckCircle className="h-5 w-5 text-white absolute -inset-0"/>}
+            </div>
+        </div>
+        <span className="ml-3 text-sm text-slate-600">Make my donation anonymous</span>
+    </label>
+  );
+
+  const PaymentStatusModal = () => (
+    modalState.isOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 text-center max-w-sm w-full">
+                {modalState.status === 'loading' && <Loader2 className="h-12 w-12 text-blue-500 mx-auto mb-4" />}
+                {modalState.status === 'success' && <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />}
+                {modalState.status === 'error' && <X className="h-12 w-12 text-red-500 mx-auto mb-4" />}
+                <h3 className="text-lg font-bold text-gray-800 mb-2">{modalState.message}</h3>
+                {modalState.status === 'success' && <button onClick={() => setModalState({isOpen: false})} className="mt-4 bg-green-500 text-white px-6 py-2 rounded-lg">Done</button>}
+                {modalState.status === 'error' && <button onClick={() => setModalState({isOpen: false})} className="mt-4 bg-red-500 text-white px-6 py-2 rounded-lg">Try Again</button>}
+            </div>
+        </div>
+    )
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 text-slate-800">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-yellow-200/20 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/20 rounded-full blur-3xl"></div>
+      </div>
+      
+      <div className="relative max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="mb-8">
+          <button onClick={handleBack} className="flex items-center text-slate-600 hover:text-slate-800 transition-all group">
+            <ArrowLeft className="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+            <span className="text-sm font-medium">{getBackButtonText()}</span>
+          </button>
+        </div>
+
+        {currentStep === 1 && <Step1_Citizenship />}
+        {currentStep === 2 && <Step2_PaymentMethod />}
+        {currentStep === 3 && <Step3_DonationForm />}
+      </div>
+      <PaymentStatusModal />
     </div>
   );
 }

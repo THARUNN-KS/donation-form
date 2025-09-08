@@ -1,48 +1,24 @@
-/* Minimal CSS to avoid conflicts */
-* {
-  box-sizing: border-box;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 body {
-  margin: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Dropdown scroll styling */
-.country-code-dropdown-container::-webkit-scrollbar,
-.currency-dropdown-container::-webkit-scrollbar,
-.country-dropdown-container::-webkit-scrollbar {
+/* Custom scrollbar for dropdowns */
+.dropdown-container::-webkit-scrollbar {
   width: 6px;
 }
-
-.country-code-dropdown-container::-webkit-scrollbar-track,
-.currency-dropdown-container::-webkit-scrollbar-track,
-.country-dropdown-container::-webkit-scrollbar-track {
+.dropdown-container::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 6px;
 }
-
-.country-code-dropdown-container::-webkit-scrollbar-thumb,
-.currency-dropdown-container::-webkit-scrollbar-thumb,
-.country-dropdown-container::-webkit-scrollbar-thumb {
+.dropdown-container::-webkit-scrollbar-thumb {
   background: #c1c1c1;
   border-radius: 6px;
 }
-
-.country-code-dropdown-container::-webkit-scrollbar-thumb:hover,
-.currency-dropdown-container::-webkit-scrollbar-thumb:hover,
-.country-dropdown-container::-webkit-scrollbar-thumb:hover {
+.dropdown-container::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
-}
-
-/* Spinner animation */
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
