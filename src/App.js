@@ -1,136 +1,272 @@
-const Razorpay = require('razorpay');
+import React, { useState, useEffect } from 'react';
+import './App.css';
 
-// Initialize Razorpay
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_4nEyceM4GUQmPk',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'VOEc6TmHfMUWVvaxJcFsTHj9'
-});
+function App() {
+  const [formData, setFormData] = useState({
+    amount: '',
+    name: '',
+    email: '',
+    phone: '',
+    frequency: 'One-time'
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState('');
 
-export default async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // Load Razorpay script dynamically
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
 
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  try {
-    const { amount, name, email, phone, frequency } = req.body;
-    
-    // Validate input
-    if (!amount || !name) {
-      return res.status(400).json({
-        error: 'Amount and name are required'
-      });
+  const validateForm = () => {
+    if (!formData.amount || !formData.name) {
+      setMessage('Please fill in all required fields');
+      return false;
     }
 
-    if (frequency === 'Monthly' && !email) {
-      return res.status(400).json({
-        error: 'Email is required for monthly donations'
-      });
+    if (formData.frequency === 'Monthly' && !formData.email) {
+      setMessage('Email is required for monthly donations');
+      return false;
     }
 
-    // Validate amount is a positive number
-    if (isNaN(amount) || parseFloat(amount) <= 0) {
-      return res.status(400).json({
-        error: 'Invalid amount. Please enter a valid positive number.'
-      });
+    const amount = parseFloat(formData.amount);
+    if (isNaN(amount) || amount <= 0) {
+      setMessage('Please enter a valid amount');
+      return false;
     }
 
-    const amountInPaisa = Math.round(parseFloat(amount) * 100);
+    return true;
+  };
 
-    if (frequency === 'Monthly') {
-      // Create subscription plan first
-      const planOptions = {
-        period: 'monthly',
-        interval: 1,
-        item: {
-          name: `Monthly Donation - ${name}`,
-          amount: amountInPaisa,
-          currency: 'INR',
-          description: `Monthly donation of ₹${amount}`
+  const initializePayment = async () => {
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    setMessage('Processing your donation...');
+
+    try {
+      console.log('Sending payment request:', formData);
+
+      const response = await fetch('https://donation-form-j142.vercel.app/api/create-order', {
+
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+      console.log('Payment response:', data);
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || 'Failed to process payment');
+      }
+
+      // Handle different response types properly
+      if (data.type === 'subscription') {
+        // For subscriptions, redirect to hosted payment page
+        if (data.short_url) {
+          console.log('Redirecting to subscription payment:', data.short_url);
+          setMessage('Subscription created! Redirecting to payment page...');
+          
+          setTimeout(() => {
+            window.location.href = data.short_url;
+          }, 1500);
+        } else {
+          setMessage(`Monthly subscription created! Subscription ID: ${data.subscription_id}`);
         }
-      };
+        setIsLoading(false);
 
-      const plan = await razorpay.plans.create(planOptions);
-      
-      console.log('Plan created:', plan.id);
+      } else if (data.type === 'order' || data.type === 'order_with_recurring_intent') {
+        // For regular orders, use Razorpay popup
+        const options = {
+          key: 'rzp_test_NkZWk4SLJaXiCx',
+          amount: data.amount,
+          currency: data.currency,
+          name: 'Your Organization',
+          description: formData.frequency === 'Monthly' ? 
+            `Monthly Donation - ₹${formData.amount}` : 
+            `Donation - ₹${formData.amount}`,
+          order_id: data.id,
+          prefill: {
+            name: formData.name,
+            email: formData.email,
+            contact: formData.phone
+          },
+          theme: {
+            color: '#3399cc'
+          },
+          handler: function(response) {
+            console.log('Payment successful:', response);
+            const successMessage = formData.frequency === 'Monthly' ? 
+              'Monthly donation processed successfully! We will set up recurring payments.' :
+              'Thank you for your generous donation!';
+            setMessage(successMessage);
+            setIsLoading(false);
+            
+            // Reset form after successful payment
+            setTimeout(() => {
+              setFormData({
+                amount: '',
+                name: '',
+                email: '',
+                phone: '',
+                frequency: 'One-time'
+              });
+              setMessage('');
+            }, 5000);
+          },
+          modal: {
+            ondismiss: function() {
+              setMessage('Payment cancelled');
+              setIsLoading(false);
+            }
+          }
+        };
 
-      // Create subscription
-      const subscriptionOptions = {
-        plan_id: plan.id,
-        customer_notify: 1,
-        total_count: 120, // 10 years of monthly payments
-        notes: {
-          donor_name: name,
-          donor_email: email || '',
-          donor_phone: phone || ''
-        }
-      };
+        console.log('Opening Razorpay with options:', options);
+        const rzp = new window.Razorpay(options);
+        rzp.open();
 
-      const subscription = await razorpay.subscriptions.create(subscriptionOptions);
-      
-      console.log('Subscription created successfully:', {
-        subscriptionId: subscription.id,
-        amount: amountInPaisa,
-        planId: plan.id,
-        donorName: name
-      });
+      } else {
+        throw new Error('Unexpected response type from server');
+      }
 
-      // Return subscription details for popup handling
-      res.status(200).json({
-        type: 'subscription',
-        subscription_id: subscription.id,
-        amount: amountInPaisa,
-        currency: 'INR',
-        key: razorpay.key_id
-      });
-
-    } else {
-      // Create regular order for one-time payment
-      const options = {
-        amount: amountInPaisa,
-        currency: 'INR',
-        receipt: `donation_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-        payment_capture: 1,
-        notes: {
-          donor_name: name,
-          donor_email: email || '',
-          donor_phone: phone || ''
-        }
-      };
-
-      const order = await razorpay.orders.create(options);
-      
-      console.log('Order created successfully:', {
-        orderId: order.id,
-        amount: order.amount,
-        currency: order.currency,
-        donorName: name
-      });
-      
-      res.status(200).json({
-        type: 'order',
-        id: order.id,
-        amount: order.amount,
-        currency: order.currency,
-        key: razorpay.key_id
-      });
+    } catch (error) {
+      console.error('Payment initiation error:', error);
+      setMessage(`Error: ${error.message}`);
+      setIsLoading(false);
     }
-    
-  } catch (error) {
-    console.error('Error creating order/subscription:', error);
-    res.status(500).json({
-      error: 'Failed to create order/subscription',
-      details: error.message
-    });
-  }
+  };
+
+  return (
+    <div className="App">
+      <div className="donation-container">
+        <div className="donation-form">
+          <h2>Make a Donation</h2>
+          
+          <div className="form-group">
+            <label>Donation Type:</label>
+            <div className="frequency-buttons">
+              <button
+                type="button"
+                className={formData.frequency === 'One-time' ? 'active' : ''}
+                onClick={() => setFormData(prev => ({ ...prev, frequency: 'One-time' }))}
+              >
+                One-time
+              </button>
+              <button
+                type="button"
+                className={formData.frequency === 'Monthly' ? 'active' : ''}
+                onClick={() => setFormData(prev => ({ ...prev, frequency: 'Monthly' }))}
+              >
+                Monthly
+              </button>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="amount">Amount (₹) *:</label>
+            <input
+              type="number"
+              id="amount"
+              name="amount"
+              value={formData.amount}
+              onChange={handleChange}
+              placeholder="Enter amount"
+              min="1"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="name">Full Name *:</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Enter your full name"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="email">
+              Email {formData.frequency === 'Monthly' ? '*' : ''}:
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter your email"
+              required={formData.frequency === 'Monthly'}
+            />
+            {formData.frequency === 'Monthly' && (
+              <small className="help-text">Email required for monthly donations</small>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="phone">Phone (Optional):</label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              placeholder="Enter your phone number"
+            />
+          </div>
+
+          <button 
+            className="donate-button" 
+            onClick={initializePayment}
+            disabled={isLoading}
+          >
+            {isLoading 
+              ? 'Processing...' 
+              : `Donate ₹${formData.amount || '0'} ${formData.frequency}`
+            }
+          </button>
+
+          {message && (
+            <div className={`message ${
+              message.includes('successful') || message.includes('created') ? 'success' : 
+              message.includes('Error') || message.includes('cancelled') ? 'error' : 
+              'info'
+            }`}>
+              {message}
+            </div>
+          )}
+
+          <div className="info-text">
+            <p>
+              {formData.frequency === 'Monthly' 
+                ? 'Monthly donations help us plan better and have greater impact.'
+                : 'Your one-time donation makes a difference.'
+              }
+            </p>
+            <p>Secure payment powered by Razorpay</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
+
+export default App;
