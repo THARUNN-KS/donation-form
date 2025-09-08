@@ -309,6 +309,25 @@ const AmountButton = ({ amount, index, isSelected, currencySymbol, onSelect }) =
 
 // Main App component
 function App() {
+  const [citizenship, setCitizenship] = useState('');
+  const [currency, setCurrency] = useState('USD');
+  const [amount, setAmount] = useState('');
+  const [details, setDetails] = useState({
+    name: '',
+    mobile: '',
+    email: '',
+    address: '',
+    city: '',
+    state: '',
+    pin: '',
+    country: 'India',
+    pan: '',
+    anonymous: false,
+  });
+
+  // Preset amounts
+  const presets = currency === 'USD' ? [500, 300, 100] : [42000, 12000, 2000];
+
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   
