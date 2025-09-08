@@ -78,6 +78,9 @@ function App() {
         const subscriptionOptions = {
           key: 'rzp_test_4nEyceM4GUQmPk',
           subscription_id: data.subscription_id,
+          amount: data.amount,        // ← Added amount
+          currency: data.currency,    // ← Added currency  
+
           name: 'Your Organization',
           description: `Monthly Donation - ₹${formData.amount}`,
           prefill: {
