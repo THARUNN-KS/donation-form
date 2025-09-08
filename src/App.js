@@ -57,7 +57,8 @@ function App() {
     try {
       console.log('Sending payment request:', formData);
 
-      const response = await fetch('/api/create-order', {
+      const response = await fetch('https://donation-form-j142.vercel.app//api/create-order', {
+
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
