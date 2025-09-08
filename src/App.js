@@ -37,6 +37,12 @@ const ChevronDown = ({ className }) => (
   </svg>
 );
 
+const ChevronRight = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+  </svg>
+);
+
 const Lock = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -939,23 +945,64 @@ function App() {
   }, [formData.amount, formData.selectedCurrency]);
 
   return (
-    <div className="min-h-screen bg-gray-100" style={{ fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif' }}>
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: '#f5f5f5',
+      fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
+    }}>
       {/* Main Donation Button */}
       {!isModalOpen && (
-        <div className="flex items-center justify-center min-h-screen p-4">
-          <div className="text-center">
-            <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-6">
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          padding: '20px'
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <h1 style={{
+              fontSize: '32px',
+              fontWeight: 'bold',
+              color: '#333',
+              marginBottom: '24px'
+            }}>
               Support Our Cause
             </h1>
-            <p className="text-gray-600 mb-8 max-w-md">
+            <p style={{
+              color: '#666',
+              marginBottom: '32px',
+              maxWidth: '400px'
+            }}>
               Your donation makes a difference in the lives of those who need it most. Every contribution counts.
             </p>
             
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 hover:from-yellow-500 hover:via-orange-600 hover:to-red-600 text-white font-bold py-4 px-8 rounded-2xl text-xl shadow-xl hover:shadow-2xl transition-all duration-200 flex items-center mx-auto"
+              style={{
+                background: 'linear-gradient(to right, #f59e0b, #f97316)',
+                color: 'white',
+                fontWeight: 'bold',
+                padding: '16px 32px',
+                borderRadius: '16px',
+                fontSize: '18px',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 10px 25px rgba(245, 158, 11, 0.3)',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                margin: '0 auto'
+              }}
+              onMouseOver={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 15px 35px rgba(245, 158, 11, 0.4)';
+              }}
+              onMouseOut={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 10px 25px rgba(245, 158, 11, 0.3)';
+              }}
             >
-              <Heart className="h-6 w-6 mr-3" />
+              <Heart style={{ height: '24px', width: '24px', marginRight: '12px' }} />
               Donate Now
             </button>
           </div>
@@ -964,140 +1011,375 @@ function App() {
 
       {/* Modal Overlay */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[95vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="flex justify-between items-center p-6 border-b border-gray-200">
-              {currentStep > 1 && (
-                <button
-                  onClick={handleBack}
-                  className="flex items-center text-blue-600 hover:text-blue-700 transition-colors"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  {currentStep === 2 ? "Back to Citizenship" : currentStep === 3 ? (formData.isIndian ? "Back to Currency" : "Back to Citizenship") : "Back to Campaign"}
-                </button>
-              )}
-              
-              {currentStep === 1 && (
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex items-center text-blue-600 hover:text-blue-700 transition-colors"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Campaign
-                </button>
-              )}
+        <div style={{
+          position: 'fixed',
+          inset: '0',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          zIndex: '50',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '24px',
+            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)',
+            maxWidth: '500px',
+            width: '100%',
+            maxHeight: '95vh',
+            overflow: 'auto'
+          }}>
+            
+            {/* Step 1: Citizenship Selection */}
+            {currentStep === 1 && (
+              <div>
+                {/* Header */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '24px 24px 0',
+                  borderBottom: '1px solid #e5e7eb',
+                  paddingBottom: '16px',
+                  marginBottom: '24px'
+                }}>
+                  <button
+                    onClick={() => setIsModalOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: '#3b82f6',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '14px'
+                    }}
+                  >
+                    <ArrowLeft style={{ height: '16px', width: '16px', marginRight: '8px' }} />
+                    Back to Campaign
+                  </button>
+                </div>
 
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors ml-auto"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="p-6">
-              {/* Step 1: Citizenship Selection */}
-              {currentStep === 1 && (
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-orange-400 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <Globe className="h-8 w-8 text-white" />
+                <div style={{ padding: '0 24px 24px', textAlign: 'center' }}>
+                  <div style={{
+                    width: '64px',
+                    height: '64px',
+                    backgroundColor: '#f59e0b',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 24px'
+                  }}>
+                    <Globe style={{ height: '32px', width: '32px', color: 'white' }} />
                   </div>
                   
-                  <h2 className="text-2xl font-bold text-gray-700 mb-2">
+                  <h2 style={{
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    color: '#374151',
+                    marginBottom: '8px'
+                  }}>
                     Choose Your Citizenship
                   </h2>
-                  <p className="text-gray-500 text-sm mb-8">
+                  <p style={{
+                    color: '#6b7280',
+                    fontSize: '14px',
+                    marginBottom: '32px'
+                  }}>
                     This helps us provide the best payment options for you
                   </p>
                   
-                  <div className="space-y-4">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <button
                       onClick={() => handleCitizenshipSelect(true)}
-                      className="w-full flex items-center p-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all duration-200 group"
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '16px',
+                        borderRadius: '12px',
+                        border: '2px solid #f59e0b',
+                        backgroundColor: '#fef3c7',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
                     >
-                      <div className="text-2xl mr-4">🇮🇳</div>
-                      <div className="text-left flex-1">
-                        <h3 className="font-semibold text-gray-800 text-lg">Indian Citizen</h3>
-                        <p className="text-sm text-gray-500 mt-1">Indian passport holder or resident</p>
-                        <p className="text-xs text-green-600 mt-1 font-medium">✓ Tax benefits available</p>
+                      <div style={{ fontSize: '32px', marginRight: '16px' }}>🇮🇳</div>
+                      <div style={{ textAlign: 'left', flex: '1' }}>
+                        <h3 style={{
+                          fontWeight: '600',
+                          color: '#d97706',
+                          fontSize: '18px',
+                          marginBottom: '4px'
+                        }}>
+                          Indian Citizen
+                        </h3>
+                        <p style={{
+                          fontSize: '14px',
+                          color: '#6b7280',
+                          marginBottom: '4px'
+                        }}>
+                          Indian passport holder or resident
+                        </p>
+                        <p style={{
+                          fontSize: '12px',
+                          color: '#059669',
+                          fontWeight: '500'
+                        }}>
+                          ✓ Tax benefits available
+                        </p>
                       </div>
+                      <ChevronRight style={{ height: '20px', width: '20px', color: '#d97706' }} />
                     </button>
                     
                     <button
                       onClick={() => handleCitizenshipSelect(false)}
-                      className="w-full flex items-center p-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all duration-200 group"
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '16px',
+                        borderRadius: '12px',
+                        border: '1px solid #e5e7eb',
+                        backgroundColor: 'white',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
                     >
-                      <div className="text-2xl mr-4">🌎</div>
-                      <div className="text-left flex-1">
-                        <h3 className="font-semibold text-gray-800 text-lg">Foreign Citizen</h3>
-                        <p className="text-sm text-gray-500 mt-1">Non-Indian passport holder</p>
+                      <div style={{ fontSize: '32px', marginRight: '16px' }}>🌎</div>
+                      <div style={{ textAlign: 'left', flex: '1' }}>
+                        <h3 style={{
+                          fontWeight: '600',
+                          color: '#374151',
+                          fontSize: '18px',
+                          marginBottom: '4px'
+                        }}>
+                          Foreign Citizen
+                        </h3>
+                        <p style={{
+                          fontSize: '14px',
+                          color: '#6b7280'
+                        }}>
+                          Non-Indian passport holder
+                        </p>
                       </div>
                     </button>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Step 2: Currency Selection */}
-              {currentStep === 2 && (
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-orange-400 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <CreditCard className="h-8 w-8 text-white" />
+            {/* Step 2: Currency Selection */}
+            {currentStep === 2 && (
+              <div>
+                {/* Header */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '24px 24px 0',
+                  borderBottom: '1px solid #e5e7eb',
+                  paddingBottom: '16px',
+                  marginBottom: '24px'
+                }}>
+                  <button
+                    onClick={handleBack}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: '#3b82f6',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '14px'
+                    }}
+                  >
+                    <ArrowLeft style={{ height: '16px', width: '16px', marginRight: '8px' }} />
+                    Back to Citizenship
+                  </button>
+                </div>
+
+                <div style={{ padding: '0 24px 24px', textAlign: 'center' }}>
+                  <div style={{
+                    width: '64px',
+                    height: '64px',
+                    backgroundColor: '#f59e0b',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 24px'
+                  }}>
+                    <CreditCard style={{ height: '32px', width: '32px', color: 'white' }} />
                   </div>
                   
-                  <h2 className="text-2xl font-bold text-gray-700 mb-8">
+                  <h2 style={{
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    color: '#374151',
+                    marginBottom: '32px'
+                  }}>
                     Choose Your Donation Currency
                   </h2>
                   
-                  <div className="space-y-4">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <button
                       onClick={() => handlePaymentMethodSelect(PaymentMethod.RAZORPAY)}
-                      className="w-full flex items-center p-4 rounded-xl border border-gray-200 hover:bg-orange-50 transition-all duration-200 group"
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '16px',
+                        borderRadius: '12px',
+                        border: '2px solid #f59e0b',
+                        backgroundColor: '#fef3c7',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
                     >
-                      <div className="w-12 h-12 bg-orange-400 rounded-xl flex items-center justify-center mr-4">
-                        <span className="text-white font-bold text-lg">₹</span>
+                      <div style={{
+                        width: '48px',
+                        height: '48px',
+                        backgroundColor: '#f59e0b',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: '16px'
+                      }}>
+                        <span style={{ color: 'white', fontWeight: 'bold', fontSize: '18px' }}>₹</span>
                       </div>
-                      <div className="text-left flex-1">
-                        <h3 className="font-semibold text-gray-800 text-lg">Donate in INR</h3>
+                      <div style={{ textAlign: 'left', flex: '1' }}>
+                        <h3 style={{
+                          fontWeight: '600',
+                          color: '#d97706',
+                          fontSize: '18px'
+                        }}>
+                          Donate in INR
+                        </h3>
                       </div>
+                      <ChevronRight style={{ height: '20px', width: '20px', color: '#d97706' }} />
                     </button>
 
                     <button
                       onClick={() => handlePaymentMethodSelect(PaymentMethod.STRIPE)}
-                      className="w-full flex items-center p-4 rounded-xl border border-gray-200 hover:bg-orange-50 transition-all duration-200 group"
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '16px',
+                        borderRadius: '12px',
+                        border: '1px solid #e5e7eb',
+                        backgroundColor: 'white',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
                     >
-                      <div className="w-12 h-12 bg-orange-400 rounded-xl flex items-center justify-center mr-4">
-                        <Globe className="h-6 w-6 text-white" />
+                      <div style={{
+                        width: '48px',
+                        height: '48px',
+                        backgroundColor: '#f59e0b',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: '16px'
+                      }}>
+                        <Globe style={{ height: '24px', width: '24px', color: 'white' }} />
                       </div>
-                      <div className="text-left flex-1">
-                        <h3 className="font-semibold text-gray-800 text-lg">Donate in Other Currencies</h3>
+                      <div style={{ textAlign: 'left', flex: '1' }}>
+                        <h3 style={{
+                          fontWeight: '600',
+                          color: '#374151',
+                          fontSize: '18px'
+                        }}>
+                          Donate in Other Currencies
+                        </h3>
                       </div>
                     </button>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Step 3: Donation Form */}
-              {currentStep === 3 && (
-                <div>
+            {/* Step 3: Donation Form */}
+            {currentStep === 3 && (
+              <div>
+                {/* Header */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '24px 24px 0',
+                  borderBottom: '1px solid #e5e7eb',
+                  paddingBottom: '16px',
+                  marginBottom: '24px'
+                }}>
+                  <button
+                    onClick={handleBack}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: '#3b82f6',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '14px'
+                    }}
+                  >
+                    <ArrowLeft style={{ height: '16px', width: '16px', marginRight: '8px' }} />
+                    {formData.isIndian ? "Back to Payment Gateway" : "Back to Citizenship"}
+                  </button>
+                </div>
+
+                <div style={{ padding: '0 24px 24px' }}>
                   {/* Payment Method Header */}
-                  <div className="bg-gradient-to-r from-orange-400 to-orange-500 text-white p-4 rounded-2xl mb-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mr-3">
-                          <span className="font-bold">
+                  <div style={{
+                    background: 'linear-gradient(to right, #f59e0b, #f97316)',
+                    color: 'white',
+                    padding: '16px',
+                    borderRadius: '16px',
+                    marginBottom: '24px'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          backgroundColor: 'rgba(255,255,255,0.2)',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginRight: '12px'
+                        }}>
+                          <span style={{ fontWeight: 'bold' }}>
                             {formData.paymentMethod === PaymentMethod.RAZORPAY ? '₹' : getCurrencySymbol(formData.selectedCurrency)}
                           </span>
                         </div>
                         <div>
-                          <p className="font-bold text-sm">
+                          <p style={{
+                            fontWeight: 'bold',
+                            fontSize: '14px',
+                            marginBottom: '2px'
+                          }}>
                             {formData.isIndian 
                               ? (formData.paymentMethod === PaymentMethod.RAZORPAY 
                                 ? 'Indian Citizen - INR Payment' 
                                 : 'Indian Citizen - International Payment')
                               : 'Foreign Citizen'}
                           </p>
-                          <p className="text-xs text-white text-opacity-80 mt-1">
+                          <p style={{
+                            fontSize: '12px',
+                            opacity: '0.8',
+                            margin: '0'
+                          }}>
                             {formData.paymentMethod === PaymentMethod.RAZORPAY 
                               ? 'Secure payment via Razorpay in INR' 
                               : `International payment via Stripe in ${formData.selectedCurrency}`}
@@ -1107,7 +1389,15 @@ function App() {
                       {formData.isIndian && (
                         <button 
                           onClick={() => setCurrentStep(2)}
-                          className="text-xs text-white text-opacity-80 hover:text-white bg-white bg-opacity-10 px-3 py-1 rounded-full border border-white border-opacity-20 hover:bg-opacity-20 transition-all duration-200"
+                          style={{
+                            fontSize: '12px',
+                            color: 'white',
+                            backgroundColor: 'rgba(255,255,255,0.1)',
+                            padding: '6px 12px',
+                            borderRadius: '20px',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            cursor: 'pointer'
+                          }}
                         >
                           Change
                         </button>
@@ -1117,46 +1407,98 @@ function App() {
 
                   {/* Currency Selector - Only for Stripe */}
                   {formData.paymentMethod === PaymentMethod.STRIPE && (
-                    <div className="mb-6">
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Currency <span className="text-red-500">*</span>
+                    <div style={{ marginBottom: '24px' }}>
+                      <label style={{
+                        display: 'block',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: '#374151',
+                        marginBottom: '8px'
+                      }}>
+                        Currency <span style={{ color: '#ef4444' }}>*</span>
                       </label>
-                      <div className="relative dropdown-container currency-dropdown-container">
+                      <div className="currency-dropdown-container" style={{ position: 'relative' }}>
                         <button
                           type="button"
                           onClick={toggleCurrencyDropdown}
-                          className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-400 transition-all duration-200"
+                          style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '12px 16px',
+                            borderRadius: '12px',
+                            border: '2px solid #e5e7eb',
+                            backgroundColor: 'white',
+                            cursor: 'pointer',
+                            fontSize: '16px'
+                          }}
                         >
-                          <span className="flex items-center">
-                            <span className="mr-2 text-lg">{currencySymbol}</span>
-                            <span className="font-semibold text-gray-700">{formData.selectedCurrency}</span>
-                            <span className="ml-2 text-gray-500 text-sm">- {AVAILABLE_CURRENCIES.find(c => c.code === formData.selectedCurrency)?.name}</span>
+                          <span style={{ display: 'flex', alignItems: 'center' }}>
+                            <span style={{ marginRight: '8px', fontSize: '18px' }}>{currencySymbol}</span>
+                            <span style={{ fontWeight: '600', color: '#374151' }}>{formData.selectedCurrency}</span>
+                            <span style={{ marginLeft: '8px', color: '#6b7280', fontSize: '14px' }}>
+                              - {AVAILABLE_CURRENCIES.find(c => c.code === formData.selectedCurrency)?.name}
+                            </span>
                           </span>
-                          <ChevronDown className="h-4 w-4 text-gray-400" />
+                          <ChevronDown style={{ height: '16px', width: '16px', color: '#6b7280' }} />
                         </button>
                         
                         {uiState.showCurrencyDropdown && (
-                          <div className="absolute z-10 mt-2 w-full bg-white rounded-xl shadow-lg border border-gray-200 max-h-64 overflow-y-auto">
-                            <div className="p-2 border-b border-gray-100">
+                          <div style={{
+                            position: 'absolute',
+                            zIndex: '10',
+                            marginTop: '8px',
+                            width: '100%',
+                            backgroundColor: 'white',
+                            borderRadius: '12px',
+                            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                            border: '1px solid #e5e7eb',
+                            maxHeight: '256px',
+                            overflowY: 'auto'
+                          }}>
+                            <div style={{
+                              padding: '8px',
+                              borderBottom: '1px solid #e5e7eb'
+                            }}>
                               <input
                                 type="text"
                                 value={uiState.currencySearchQuery}
                                 onChange={(e) => setUiState(prev => ({ ...prev, currencySearchQuery: e.target.value }))}
                                 placeholder="Search currency..."
-                                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-blue-400"
+                                style={{
+                                  width: '100%',
+                                  padding: '8px 12px',
+                                  borderRadius: '8px',
+                                  border: '1px solid #e5e7eb',
+                                  fontSize: '14px'
+                                }}
                               />
                             </div>
-                            <div className="py-1">
+                            <div style={{ padding: '4px' }}>
                               {filteredCurrencies.map((currency) => (
                                 <button
                                   key={currency.code}
                                   type="button"
                                   onClick={() => handleCurrencySelect(currency.code)}
-                                  className="flex items-center w-full px-4 py-3 text-left text-sm hover:bg-gray-50 transition-all duration-200"
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    width: '100%',
+                                    padding: '12px 16px',
+                                    textAlign: 'left',
+                                    fontSize: '14px',
+                                    border: 'none',
+                                    backgroundColor: 'transparent',
+                                    cursor: 'pointer',
+                                    borderRadius: '8px'
+                                  }}
+                                  onMouseOver={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+                                  onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
                                 >
-                                  <span className="mr-3 text-lg">{currency.symbol}</span>
-                                  <span className="font-medium text-gray-700">{currency.code}</span>
-                                  <span className="ml-2 text-gray-500">- {currency.name}</span>
+                                  <span style={{ marginRight: '12px', fontSize: '18px' }}>{currency.symbol}</span>
+                                  <span style={{ fontWeight: '500', color: '#374151' }}>{currency.code}</span>
+                                  <span style={{ marginLeft: '8px', color: '#6b7280' }}>- {currency.name}</span>
                                 </button>
                               ))}
                             </div>
@@ -1167,44 +1509,87 @@ function App() {
                   )}
 
                   {/* Amount Selection */}
-                  <div className="mb-6">
-                    <div className="text-center mb-4">
-                      <h2 className="text-xl font-bold text-gray-700 mb-2">
+                  <div style={{ marginBottom: '24px' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+                      <h2 style={{
+                        fontSize: '20px',
+                        fontWeight: 'bold',
+                        color: '#374151',
+                        marginBottom: '8px'
+                      }}>
                         Choose Your Donation Amount
                       </h2>
-                      <p className="text-gray-500 text-sm">Every contribution makes a meaningful difference</p>
+                      <p style={{
+                        color: '#6b7280',
+                        fontSize: '14px'
+                      }}>
+                        Every contribution makes a meaningful difference
+                      </p>
                     </div>
                     
                     {/* Amount buttons */}
-                    <div className="grid grid-cols-3 gap-3 mb-4">
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(3, 1fr)',
+                      gap: '12px',
+                      marginBottom: '16px'
+                    }}>
                       {predefinedAmounts.map((amount, index) => (
                         <button
                           key={index}
                           type="button"
                           onClick={() => handleAmountSelect(amount)}
-                          className={`relative py-4 px-3 rounded-xl transition-all duration-200 ${
-                            Math.round(Number(formData.localAmount)) === Math.round(Number(amount)) && !uiState.isCustomAmount
-                              ? 'bg-gradient-to-br from-orange-400 to-orange-500 text-white shadow-lg'
-                              : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
-                          } focus:outline-none`}
+                          style={{
+                            position: 'relative',
+                            padding: '16px 12px',
+                            borderRadius: '12px',
+                            border: Math.round(Number(formData.localAmount)) === Math.round(Number(amount)) && !uiState.isCustomAmount
+                              ? '2px solid #f59e0b'
+                              : '1px solid #e5e7eb',
+                            backgroundColor: Math.round(Number(formData.localAmount)) === Math.round(Number(amount)) && !uiState.isCustomAmount
+                              ? '#f59e0b'
+                              : 'white',
+                            color: Math.round(Number(formData.localAmount)) === Math.round(Number(amount)) && !uiState.isCustomAmount
+                              ? 'white'
+                              : '#374151',
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            fontSize: '16px',
+                            transition: 'all 0.2s ease'
+                          }}
                         >
                           {index === 1 && (
-                            <div className="absolute -top-1 left-0 right-0 flex justify-center">
-                              <span className="bg-green-500 text-xs font-bold px-2 py-0.5 rounded-full text-white flex items-center gap-1">
-                                <Star className="h-2 w-2" />
+                            <div style={{
+                              position: 'absolute',
+                              top: '-4px',
+                              left: '0',
+                              right: '0',
+                              display: 'flex',
+                              justifyContent: 'center'
+                            }}>
+                              <span style={{
+                                backgroundColor: '#10b981',
+                                fontSize: '10px',
+                                fontWeight: 'bold',
+                                padding: '2px 8px',
+                                borderRadius: '20px',
+                                color: 'white',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}>
+                                <Star style={{ height: '10px', width: '10px' }} />
                                 Popular
                               </span>
                             </div>
                           )}
-                          <div className="text-lg font-bold">
-                            {currencySymbol}{Math.round(Number(amount)).toLocaleString()}
-                          </div>
+                          {currencySymbol}{Math.round(Number(amount)).toLocaleString()}
                         </button>
                       ))}
                     </div>
                     
                     {/* Custom Amount Input */}
-                    <div className="relative">
+                    <div style={{ position: 'relative' }}>
                       <input
                         type="number"
                         value={formData.customAmount}
@@ -1212,287 +1597,549 @@ function App() {
                         placeholder="Enter custom amount"
                         min="1"
                         step="1"
-                        className={`w-full pl-12 pr-16 py-3 rounded-xl border-2 transition-all duration-200 focus:outline-none ${
-                          uiState.isCustomAmount 
-                            ? 'border-orange-300 bg-orange-50' 
-                            : 'border-gray-200 focus:border-blue-400'
-                        }`}
+                        style={{
+                          width: '100%',
+                          paddingLeft: '48px',
+                          paddingRight: '60px',
+                          paddingTop: '12px',
+                          paddingBottom: '12px',
+                          borderRadius: '12px',
+                          border: uiState.isCustomAmount 
+                            ? '2px solid #f59e0b' 
+                            : '2px solid #e5e7eb',
+                          backgroundColor: uiState.isCustomAmount ? '#fef3c7' : 'white',
+                          fontSize: '16px',
+                          outline: 'none'
+                        }}
                       />
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <span className="text-gray-500 font-bold">{currencySymbol}</span>
+                      <div style={{
+                        position: 'absolute',
+                        left: '16px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: '#6b7280',
+                        fontWeight: 'bold',
+                        pointerEvents: 'none'
+                      }}>
+                        {currencySymbol}
                       </div>
-                      <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                        <span className="text-gray-400 text-sm">{formData.selectedCurrency}</span>
+                      <div style={{
+                        position: 'absolute',
+                        right: '16px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: '#9ca3af',
+                        fontSize: '14px',
+                        pointerEvents: 'none'
+                      }}>
+                        {formData.selectedCurrency}
                       </div>
                     </div>
                   </div>
 
                   {/* Personal Details */}
-                  <div className="space-y-4 mb-6">
-                    <div className="text-center mb-4">
-                      <h2 className="text-xl font-bold text-gray-700 mb-2">
+                  <div style={{ marginBottom: '24px' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+                      <h2 style={{
+                        fontSize: '20px',
+                        fontWeight: 'bold',
+                        color: '#374151',
+                        marginBottom: '8px'
+                      }}>
                         Your Details
                       </h2>
-                      <p className="text-gray-500 text-sm">We'll use this information for your donation receipt</p>
+                      <p style={{
+                        color: '#6b7280',
+                        fontSize: '14px'
+                      }}>
+                        We'll use this information for your donation receipt
+                      </p>
                     </div>
 
-                    {/* Name */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Full Name <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => handleFormFieldChange('name', e.target.value)}
-                        placeholder="Enter your full name"
-                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-400 transition-all duration-200"
-                        required
-                      />
-                    </div>
-                    
-                    {/* Phone Number */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Mobile Number <span className="text-red-500">*</span>
-                      </label>
-                      <div className="flex space-x-2">
-                        {/* Country Code Dropdown */}
-                        <div className="relative country-code-dropdown-container dropdown-container w-20 flex-shrink-0">
-                          <button
-                            type="button"
-                            onClick={toggleCountryCodeDropdown}
-                            className="w-full h-12 flex items-center justify-center px-2 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-400 transition-all duration-200"
-                          >
-                            <span className="text-xs font-semibold truncate">{formData.countryCode}</span>
-                          </button>
-                          
-                          {uiState.showCountryCodeDropdown && (
-                            <div className="absolute z-30 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 max-h-48 overflow-y-auto left-0">
-                              <div className="p-2 border-b border-gray-100">
-                                <input
-                                  type="text"
-                                  value={uiState.countryCodeSearchQuery}
-                                  onChange={(e) => setUiState(prev => ({ ...prev, countryCodeSearchQuery: e.target.value }))}
-                                  placeholder="Search country..."
-                                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-blue-400"
-                                />
-                              </div>
-                              <div className="py-1">
-                                {filteredCountryCodes.map((countryCode) => (
-                                  <button
-                                    key={countryCode.code + countryCode.country}
-                                    type="button"
-                                    onClick={() => selectCountryCode(countryCode)}
-                                    className="flex items-center w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-all duration-200"
-                                  >
-                                    <span className="mr-2 text-sm">{countryCode.flag}</span>
-                                    <span className="truncate text-xs text-gray-600">{countryCode.country}</span>
-                                    <span className="ml-auto font-semibold text-gray-800 text-xs">{countryCode.code}</span>
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        
-                        {/* Phone Input */}
-                        <div className="flex-1 min-w-0">
-                          <input
-                            type="tel"
-                            value={formData.phone}
-                            onChange={handlePhoneChange}
-                            placeholder="Enter your mobile number"
-                            className={`w-full h-12 px-4 rounded-xl border-2 focus:outline-none transition-all duration-200 ${
-                              hasTouchedPhone && phoneError
-                                ? 'border-red-300 focus:border-red-400'
-                                : 'border-gray-200 focus:border-blue-400'
-                            }`}
-                            required
-                          />
-                        </div>
-                      </div>
-                      {hasTouchedPhone && phoneError && (
-                        <p className="text-xs text-red-500 mt-1">{phoneError}</p>
-                      )}
-                    </div>
-                    
-                    {/* Email */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Email Address <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        value={formData.email}
-                        onChange={handleEmailChange}
-                        onBlur={handleEmailBlur}
-                        placeholder="Enter your email address"
-                        className={`w-full px-4 py-3 rounded-xl border-2 focus:outline-none transition-all duration-200 ${
-                          hasEmailTouched && emailError
-                            ? 'border-red-300 focus:border-red-400'
-                            : 'border-gray-200 focus:border-blue-400'
-                        }`}
-                        required
-                      />
-                      {hasEmailTouched && emailError && (
-                        <p className="text-xs text-red-500 mt-1">{emailError}</p>
-                      )}
-                    </div>
-
-                    {/* Address */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Address <span className="text-red-500">*</span>
-                      </label>
-                      <textarea
-                        value={formData.address}
-                        onChange={(e) => handleFormFieldChange('address', e.target.value)}
-                        placeholder="Enter your street address"
-                        rows={2}
-                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-400 transition-all duration-200 resize-none"
-                        required
-                      />
-                    </div>
-                    
-                    {/* City */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        City <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.city}
-                        onChange={(e) => handleFormFieldChange('city', e.target.value)}
-                        placeholder="Enter your city"
-                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-400 transition-all duration-200"
-                        required
-                      />
-                    </div>
-                    
-                    {/* State */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        State <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.state}
-                        onChange={(e) => handleFormFieldChange('state', e.target.value)}
-                        placeholder="Enter your state"
-                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-400 transition-all duration-200"
-                        required
-                      />
-                    </div>
-                    
-                    {/* Pincode */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        {formData.country === "India" ? "Pin Code" : "Zip Code"} <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.pincode}
-                        onChange={handlePincodeChange}
-                        placeholder={formData.country === "India" ? "eg : 110001" : "eg : 10001"}
-                        maxLength={formData.country === "India" ? 6 : 10}
-                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-400 transition-all duration-200"
-                        required
-                      />
-                    </div>
-
-                    {/* PAN Number (Only for Razorpay) */}
-                    {formData.paymentMethod === PaymentMethod.RAZORPAY && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {/* Name */}
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          PAN Number (If you want to avail 80G tax exemption, please provide PAN )
+                        <label style={{
+                          display: 'block',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          color: '#374151',
+                          marginBottom: '6px'
+                        }}>
+                          Full Name <span style={{ color: '#ef4444' }}>*</span>
                         </label>
                         <input
                           type="text"
-                          value={formData.panNumber}
-                          placeholder="ENTER PAN NUMBER (E.G., ABCTY1234D)"
-                          onChange={handlePanNumberChange}
-                          maxLength={10}
-                          className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-400 transition-all duration-200 uppercase placeholder-gray-400"
+                          value={formData.name}
+                          onChange={(e) => handleFormFieldChange('name', e.target.value)}
+                          placeholder="Enter your full name"
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '12px',
+                            border: '2px solid #e5e7eb',
+                            fontSize: '16px',
+                            outline: 'none'
+                          }}
+                          required
                         />
                       </div>
-                    )}
-
-                    {/* Country Dropdown (For international) */}
-                    {formData.paymentMethod !== PaymentMethod.RAZORPAY && (
+                      
+                      {/* Phone Number */}
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Country <span className="text-red-500">*</span>
+                        <label style={{
+                          display: 'block',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          color: '#374151',
+                          marginBottom: '6px'
+                        }}>
+                          Mobile Number <span style={{ color: '#ef4444' }}>*</span>
                         </label>
-                        <div className="relative dropdown-container country-dropdown-container">
-                          <button
-                            type="button"
-                            onClick={toggleCountryDropdown}
-                            className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-400 transition-all duration-200"
-                          >
-                            <span className="flex items-center">
-                              <span className="mr-3 text-lg">
-                                {COUNTRIES.find(c => c.name === formData.country)?.flag || '🌎'}
-                              </span>
-                              <span className="font-semibold text-gray-700">{formData.country}</span>
-                            </span>
-                            <ChevronDown className="h-4 w-4 text-gray-400" />
-                          </button>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          {/* Country Code Dropdown */}
+                          <div className="country-code-dropdown-container" style={{ position: 'relative', width: '80px', flexShrink: '0' }}>
+                            <button
+                              type="button"
+                              onClick={toggleCountryCodeDropdown}
+                              style={{
+                                width: '100%',
+                                height: '48px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '0 8px',
+                                borderRadius: '12px',
+                                border: '2px solid #e5e7eb',
+                                backgroundColor: 'white',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                fontWeight: '600'
+                              }}
+                            >
+                              {formData.countryCode}
+                            </button>
+                            
+                            {uiState.showCountryCodeDropdown && (
+                              <div style={{
+                                position: 'absolute',
+                                zIndex: '30',
+                                marginTop: '8px',
+                                width: '256px',
+                                backgroundColor: 'white',
+                                borderRadius: '12px',
+                                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                                border: '1px solid #e5e7eb',
+                                maxHeight: '192px',
+                                overflowY: 'auto',
+                                left: '0'
+                              }}>
+                                <div style={{
+                                  padding: '8px',
+                                  borderBottom: '1px solid #e5e7eb'
+                                }}>
+                                  <input
+                                    type="text"
+                                    value={uiState.countryCodeSearchQuery}
+                                    onChange={(e) => setUiState(prev => ({ ...prev, countryCodeSearchQuery: e.target.value }))}
+                                    placeholder="Search country..."
+                                    style={{
+                                      width: '100%',
+                                      padding: '8px 12px',
+                                      borderRadius: '8px',
+                                      border: '1px solid #e5e7eb',
+                                      fontSize: '14px'
+                                    }}
+                                  />
+                                </div>
+                                <div style={{ padding: '4px' }}>
+                                  {filteredCountryCodes.map((countryCode) => (
+                                    <button
+                                      key={countryCode.code + countryCode.country}
+                                      type="button"
+                                      onClick={() => selectCountryCode(countryCode)}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        width: '100%',
+                                        padding: '8px 12px',
+                                        textAlign: 'left',
+                                        fontSize: '14px',
+                                        border: 'none',
+                                        backgroundColor: 'transparent',
+                                        cursor: 'pointer',
+                                        borderRadius: '6px'
+                                      }}
+                                      onMouseOver={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+                                      onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
+                                    >
+                                      <span style={{ marginRight: '8px', fontSize: '16px' }}>{countryCode.flag}</span>
+                                      <span style={{ fontSize: '12px', color: '#6b7280', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{countryCode.country}</span>
+                                      <span style={{ marginLeft: 'auto', fontWeight: '600', color: '#374151', fontSize: '12px' }}>{countryCode.code}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                           
-                          {uiState.showCountryDropdown && (
-                            <div className="absolute z-10 mt-2 w-full bg-white rounded-xl shadow-lg border border-gray-200 max-h-48 overflow-y-auto">
-                              <div className="p-2 border-b border-gray-100">
-                                <input
-                                  type="text"
-                                  value={uiState.countrySearchQuery}
-                                  onChange={(e) => setUiState(prev => ({ ...prev, countrySearchQuery: e.target.value }))}
-                                  placeholder="Search country..."
-                                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-blue-400"
-                                />
-                              </div>
-                              <div className="py-1">
-                                {filteredCountries.map((country) => (
-                                  <button
-                                    key={country.code}
-                                    type="button"
-                                    onClick={() => selectCountry(country)}
-                                    className="flex items-center w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-all duration-200"
-                                  >
-                                    <span className="mr-3 text-lg">{country.flag}</span>
-                                    <span className="text-gray-700 font-medium">{country.name}</span>
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          )}
+                          {/* Phone Input */}
+                          <div style={{ flex: '1', minWidth: '0' }}>
+                            <input
+                              type="tel"
+                              value={formData.phone}
+                              onChange={handlePhoneChange}
+                              placeholder="Enter your mobile number"
+                              style={{
+                                width: '100%',
+                                height: '48px',
+                                padding: '0 16px',
+                                borderRadius: '12px',
+                                border: hasTouchedPhone && phoneError
+                                  ? '2px solid #ef4444'
+                                  : '2px solid #e5e7eb',
+                                fontSize: '16px',
+                                outline: 'none'
+                              }}
+                              required
+                            />
+                          </div>
                         </div>
+                        {hasTouchedPhone && phoneError && (
+                          <p style={{
+                            fontSize: '12px',
+                            color: '#ef4444',
+                            marginTop: '4px'
+                          }}>
+                            {phoneError}
+                          </p>
+                        )}
                       </div>
-                    )}
+                      
+                      {/* Email */}
+                      <div>
+                        <label style={{
+                          display: 'block',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          color: '#374151',
+                          marginBottom: '6px'
+                        }}>
+                          Email Address <span style={{ color: '#ef4444' }}>*</span>
+                        </label>
+                        <input
+                          type="email"
+                          value={formData.email}
+                          onChange={handleEmailChange}
+                          onBlur={handleEmailBlur}
+                          placeholder="Enter your email address"
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '12px',
+                            border: hasEmailTouched && emailError
+                              ? '2px solid #ef4444'
+                              : '2px solid #e5e7eb',
+                            fontSize: '16px',
+                            outline: 'none'
+                          }}
+                          required
+                        />
+                        {hasEmailTouched && emailError && (
+                          <p style={{
+                            fontSize: '12px',
+                            color: '#ef4444',
+                            marginTop: '4px'
+                          }}>
+                            {emailError}
+                          </p>
+                        )}
+                      </div>
 
-                    {/* Anonymous Donation Checkbox */}
-                    <div className="mt-4">
-                      <label className="flex items-center cursor-pointer">
-                        <div className="relative">
-                          <input 
-                            type="checkbox" 
-                            checked={formData.isAnonymous}
-                            onChange={(e) => handleAnonymousToggle(e.target.checked)}
-                            className="sr-only"
+                      {/* Address */}
+                      <div>
+                        <label style={{
+                          display: 'block',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          color: '#374151',
+                          marginBottom: '6px'
+                        }}>
+                          Address <span style={{ color: '#ef4444' }}>*</span>
+                        </label>
+                        <textarea
+                          value={formData.address}
+                          onChange={(e) => handleFormFieldChange('address', e.target.value)}
+                          placeholder="Enter your street address"
+                          rows={2}
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '12px',
+                            border: '2px solid #e5e7eb',
+                            fontSize: '16px',
+                            outline: 'none',
+                            resize: 'none'
+                          }}
+                          required
+                        />
+                      </div>
+                      
+                      {/* City */}
+                      <div>
+                        <label style={{
+                          display: 'block',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          color: '#374151',
+                          marginBottom: '6px'
+                        }}>
+                          City <span style={{ color: '#ef4444' }}>*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.city}
+                          onChange={(e) => handleFormFieldChange('city', e.target.value)}
+                          placeholder="Enter your city"
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '12px',
+                            border: '2px solid #e5e7eb',
+                            fontSize: '16px',
+                            outline: 'none'
+                          }}
+                          required
+                        />
+                      </div>
+                      
+                      {/* State */}
+                      <div>
+                        <label style={{
+                          display: 'block',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          color: '#374151',
+                          marginBottom: '6px'
+                        }}>
+                          State <span style={{ color: '#ef4444' }}>*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.state}
+                          onChange={(e) => handleFormFieldChange('state', e.target.value)}
+                          placeholder="Enter your state"
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '12px',
+                            border: '2px solid #e5e7eb',
+                            fontSize: '16px',
+                            outline: 'none'
+                          }}
+                          required
+                        />
+                      </div>
+                      
+                      {/* Pincode */}
+                      <div>
+                        <label style={{
+                          display: 'block',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          color: '#374151',
+                          marginBottom: '6px'
+                        }}>
+                          {formData.country === "India" ? "Pin Code" : "Zip Code"} <span style={{ color: '#ef4444' }}>*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.pincode}
+                          onChange={handlePincodeChange}
+                          placeholder={formData.country === "India" ? "eg : 110001" : "eg : 10001"}
+                          maxLength={formData.country === "India" ? 6 : 10}
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '12px',
+                            border: '2px solid #e5e7eb',
+                            fontSize: '16px',
+                            outline: 'none'
+                          }}
+                          required
+                        />
+                      </div>
+
+                      {/* PAN Number (Only for Razorpay) */}
+                      {formData.paymentMethod === PaymentMethod.RAZORPAY && (
+                        <div>
+                          <label style={{
+                            display: 'block',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            color: '#374151',
+                            marginBottom: '6px'
+                          }}>
+                            PAN Number (If you want to avail 80G tax exemption, please provide PAN )
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.panNumber}
+                            placeholder="ENTER PAN NUMBER (E.G., ABCTY1234D)"
+                            onChange={handlePanNumberChange}
+                            maxLength={10}
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              borderRadius: '12px',
+                              border: '2px solid #e5e7eb',
+                              fontSize: '16px',
+                              outline: 'none',
+                              textTransform: 'uppercase'
+                            }}
                           />
-                          <div className={`w-4 h-4 rounded border-2 transition-all duration-200 ${
-                            formData.isAnonymous 
-                              ? 'bg-blue-500 border-blue-500' 
-                              : 'bg-white border-gray-300'
-                          }`}>
-                            {formData.isAnonymous && (
-                              <CheckCircle className="h-4 w-4 text-white absolute -inset-0" />
+                        </div>
+                      )}
+
+                      {/* Country Dropdown (For international) */}
+                      {formData.paymentMethod !== PaymentMethod.RAZORPAY && (
+                        <div>
+                          <label style={{
+                            display: 'block',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            color: '#374151',
+                            marginBottom: '6px'
+                          }}>
+                            Country <span style={{ color: '#ef4444' }}>*</span>
+                          </label>
+                          <div className="country-dropdown-container" style={{ position: 'relative' }}>
+                            <button
+                              type="button"
+                              onClick={toggleCountryDropdown}
+                              style={{
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '12px 16px',
+                                borderRadius: '12px',
+                                border: '2px solid #e5e7eb',
+                                backgroundColor: 'white',
+                                cursor: 'pointer',
+                                fontSize: '16px'
+                              }}
+                            >
+                              <span style={{ display: 'flex', alignItems: 'center' }}>
+                                <span style={{ marginRight: '12px', fontSize: '18px' }}>
+                                  {COUNTRIES.find(c => c.name === formData.country)?.flag || '🌎'}
+                                </span>
+                                <span style={{ fontWeight: '600', color: '#374151' }}>{formData.country}</span>
+                              </span>
+                              <ChevronDown style={{ height: '16px', width: '16px', color: '#6b7280' }} />
+                            </button>
+                            
+                            {uiState.showCountryDropdown && (
+                              <div style={{
+                                position: 'absolute',
+                                zIndex: '10',
+                                marginTop: '8px',
+                                width: '100%',
+                                backgroundColor: 'white',
+                                borderRadius: '12px',
+                                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                                border: '1px solid #e5e7eb',
+                                maxHeight: '192px',
+                                overflowY: 'auto'
+                              }}>
+                                <div style={{
+                                  padding: '8px',
+                                  borderBottom: '1px solid #e5e7eb'
+                                }}>
+                                  <input
+                                    type="text"
+                                    value={uiState.countrySearchQuery}
+                                    onChange={(e) => setUiState(prev => ({ ...prev, countrySearchQuery: e.target.value }))}
+                                    placeholder="Search country..."
+                                    style={{
+                                      width: '100%',
+                                      padding: '8px 12px',
+                                      borderRadius: '8px',
+                                      border: '1px solid #e5e7eb',
+                                      fontSize: '14px'
+                                    }}
+                                  />
+                                </div>
+                                <div style={{ padding: '4px' }}>
+                                  {filteredCountries.map((country) => (
+                                    <button
+                                      key={country.code}
+                                      type="button"
+                                      onClick={() => selectCountry(country)}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        width: '100%',
+                                        padding: '8px 16px',
+                                        textAlign: 'left',
+                                        fontSize: '14px',
+                                        border: 'none',
+                                        backgroundColor: 'transparent',
+                                        cursor: 'pointer',
+                                        borderRadius: '6px'
+                                      }}
+                                      onMouseOver={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+                                      onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
+                                    >
+                                      <span style={{ marginRight: '12px', fontSize: '18px' }}>{country.flag}</span>
+                                      <span style={{ color: '#374151', fontWeight: '500' }}>{country.name}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
                             )}
                           </div>
                         </div>
-                        <span className="ml-3 text-sm text-gray-600">
-                          Make my donation anonymous ( your name won't be displayed publicly )
-                        </span>
-                      </label>
+                      )}
+
+                      {/* Anonymous Donation Checkbox */}
+                      <div style={{ marginTop: '16px' }}>
+                        <label style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: 'pointer'
+                        }}>
+                          <div style={{ position: 'relative' }}>
+                            <input 
+                              type="checkbox" 
+                              checked={formData.isAnonymous}
+                              onChange={(e) => handleAnonymousToggle(e.target.checked)}
+                              style={{ display: 'none' }}
+                            />
+                            <div style={{
+                              width: '16px',
+                              height: '16px',
+                              borderRadius: '4px',
+                              border: '2px solid ' + (formData.isAnonymous ? '#3b82f6' : '#d1d5db'),
+                              backgroundColor: formData.isAnonymous ? '#3b82f6' : 'white',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              {formData.isAnonymous && (
+                                <CheckCircle style={{ height: '16px', width: '16px', color: 'white' }} />
+                              )}
+                            </div>
+                          </div>
+                          <span style={{
+                            marginLeft: '12px',
+                            fontSize: '14px',
+                            color: '#374151'
+                          }}>
+                            Make my donation anonymous ( your name won't be displayed publicly )
+                          </span>
+                        </label>
+                      </div>
                     </div>
                   </div>
 
@@ -1501,69 +2148,141 @@ function App() {
                     type="button"
                     onClick={handleSubmit}
                     disabled={!areRequiredFieldsFilled() || uiState.isSubmitting}
-                    className={`
-                      w-full flex items-center justify-center px-6 py-4 rounded-xl text-lg font-bold transition-all duration-200 shadow-lg mb-4
-                      ${areRequiredFieldsFilled() && !uiState.isSubmitting
-                        ? 'bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white shadow-orange-200 hover:shadow-xl' 
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'}
-                    `}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '16px 24px',
+                      borderRadius: '12px',
+                      fontSize: '18px',
+                      fontWeight: 'bold',
+                      border: 'none',
+                      cursor: areRequiredFieldsFilled() && !uiState.isSubmitting ? 'pointer' : 'not-allowed',
+                      backgroundColor: areRequiredFieldsFilled() && !uiState.isSubmitting
+                        ? '#e5e7eb'
+                        : '#e5e7eb',
+                      color: areRequiredFieldsFilled() && !uiState.isSubmitting
+                        ? '#374151'
+                        : '#9ca3af',
+                      marginBottom: '16px',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseOver={(e) => {
+                      if (areRequiredFieldsFilled() && !uiState.isSubmitting) {
+                        e.target.style.backgroundColor = '#f59e0b';
+                        e.target.style.color = 'white';
+                      }
+                    }}
+                    onMouseOut={(e) => {
+                      if (areRequiredFieldsFilled() && !uiState.isSubmitting) {
+                        e.target.style.backgroundColor = '#e5e7eb';
+                        e.target.style.color = '#374151';
+                      }
+                    }}
                   >
                     {uiState.isSubmitting ? (
-                      <div className="flex items-center">
-                        <Loader2 className="animate-spin h-5 w-5 mr-3" />
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <Loader2 style={{ animation: 'spin 1s linear infinite', height: '20px', width: '20px', marginRight: '12px' }} />
                         Processing...
                       </div>
                     ) : (
-                      <span className="flex items-center">
-                        <Heart className="h-5 w-5 mr-3" />
+                      <span style={{ display: 'flex', alignItems: 'center' }}>
+                        <Heart style={{ height: '20px', width: '20px', marginRight: '12px' }} />
                         Donate {currencySymbol}{Math.round(formData.localAmount).toLocaleString()}
                       </span>
                     )}
                   </button>
 
                   {/* Security Notice */}
-                  <div className="flex justify-center mb-4">
-                    <div className="bg-gray-50 rounded-xl py-2 px-4 flex items-center text-sm text-gray-600">
-                      <Lock className="h-4 w-4 mr-2 text-green-500" />
-                      <span className="mr-2">Secure payment powered by</span>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    marginBottom: '16px'
+                  }}>
+                    <div style={{
+                      backgroundColor: '#f3f4f6',
+                      borderRadius: '12px',
+                      padding: '8px 16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      fontSize: '14px',
+                      color: '#374151'
+                    }}>
+                      <Lock style={{ height: '16px', width: '16px', marginRight: '8px', color: '#10b981' }} />
+                      <span style={{ marginRight: '8px' }}>Secure payment powered by</span>
                       {formData.paymentMethod === PaymentMethod.RAZORPAY 
-                        ? <span className="bg-indigo-600 text-white px-2 py-1 rounded text-xs font-bold">Razorpay</span>
-                        : <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-bold">Stripe</span>}
+                        ? <span style={{ backgroundColor: '#6366f1', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>Razorpay</span>
+                        : <span style={{ backgroundColor: '#3b82f6', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>Stripe</span>}
                     </div>
                   </div>
 
                   {/* Trust Badges */}
-                  <div className="grid grid-cols-3 gap-3">
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '12px'
+                  }}>
                     {TRUST_BADGES.map((badge, index) => (
-                      <div key={index} className="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100">
-                        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                          <badge.icon className="h-4 w-4 text-orange-500" />
+                      <div key={index} style={{
+                        backgroundColor: 'white',
+                        borderRadius: '12px',
+                        padding: '12px',
+                        textAlign: 'center',
+                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                        border: '1px solid #f3f4f6'
+                      }}>
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          backgroundColor: '#fef3c7',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          margin: '0 auto 8px'
+                        }}>
+                          <badge.icon style={{ height: '16px', width: '16px', color: '#f59e0b' }} />
                         </div>
-                        <h4 className="text-xs font-bold text-gray-700">
+                        <h4 style={{
+                          fontSize: '12px',
+                          fontWeight: 'bold',
+                          color: '#374151',
+                          marginBottom: '2px'
+                        }}>
                           {badge.title}
                         </h4>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p style={{
+                          fontSize: '10px',
+                          color: '#6b7280'
+                        }}>
                           {badge.description}
                         </p>
                       </div>
                     ))}
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Message Display */}
-              {message && (
-                <div className={`mt-4 p-3 rounded-xl text-center text-sm font-medium ${
-                  message.includes('successful') || message.includes('Thank you') 
-                    ? 'bg-green-50 text-green-700 border border-green-200' 
-                    : message.includes('Error') || message.includes('cancelled') 
-                    ? 'bg-red-50 text-red-700 border border-red-200'
-                    : 'bg-blue-50 text-blue-700 border border-blue-200'
-                }`}>
-                  {message}
-                </div>
-              )}
-            </div>
+            {/* Message Display */}
+            {message && (
+              <div style={{
+                margin: '16px 24px',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                textAlign: 'center',
+                fontSize: '14px',
+                fontWeight: '500',
+                ...(message.includes('successful') || message.includes('Thank you') 
+                  ? { backgroundColor: '#d1fae5', color: '#065f46', border: '1px solid #a7f3d0' }
+                  : message.includes('Error') || message.includes('cancelled') 
+                  ? { backgroundColor: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5' }
+                  : { backgroundColor: '#dbeafe', color: '#1e40af', border: '1px solid #93c5fd' })
+              }}>
+                {message}
+              </div>
+            )}
           </div>
         </div>
       )}
