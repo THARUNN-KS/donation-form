@@ -5,11 +5,29 @@ const Razorpay = require('razorpay');
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// Middleware
+// Determine allowed origins based on environment
+const allowedOrigins = [
+  'http://localhost:3000',  // Development
+  'https://donation-form-j142.vercel.app',  // Production
+  // Add any other domains you might use
+];
+
+// CORS Configuration
 app.use(cors({
-  origin: 'http://localhost:3000', // React app URL
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
+
+// JSON parsing middleware
 app.use(express.json());
 
 // Initialize Razorpay with your keys
@@ -112,10 +130,27 @@ app.get('/', (req, res) => {
   });
 });
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({
+    error: 'Internal server error',
+    message: err.message
+  });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({
+    error: 'Endpoint not found',
+    message: `Cannot ${req.method} ${req.originalUrl}`
+  });
+});
+
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Backend server is running on http://localhost:${PORT}`);
-  console.log(`📋 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔗 API endpoint: http://localhost:${PORT}/api/create-order`);
-  console.log('💡 Make sure to replace Razorpay keys with your actual keys!');
+  console.log(`Backend server is running on http://localhost:${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/health`);
+  console.log(`API endpoint: http://localhost:${PORT}/api/create-order`);
+  console.log('Make sure to replace Razorpay keys with your actual keys!');
 });
