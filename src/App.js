@@ -58,7 +58,6 @@ function App() {
       console.log('Sending payment request:', formData);
 
       const response = await fetch('https://donation-form-j142.vercel.app/api/create-order', {
-
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,18 +74,48 @@ function App() {
 
       // Handle different response types properly
       if (data.type === 'subscription') {
-        // For subscriptions, redirect to hosted payment page
-        if (data.short_url) {
-          console.log('Redirecting to subscription payment:', data.short_url);
-          setMessage('Subscription created! Redirecting to payment page...');
-          
-          setTimeout(() => {
-            window.location.href = data.short_url;
-          }, 1500);
-        } else {
-          setMessage(`Monthly subscription created! Subscription ID: ${data.subscription_id}`);
-        }
-        setIsLoading(false);
+        // For subscriptions, use Razorpay popup with subscription_id
+        const subscriptionOptions = {
+          key: data.key || 'rzp_test_NkZWk4SLJaXiCx',
+          subscription_id: data.subscription_id,
+          name: 'Your Organization',
+          description: `Monthly Donation - ₹${formData.amount}`,
+          prefill: {
+            name: formData.name,
+            email: formData.email,
+            contact: formData.phone
+          },
+          theme: {
+            color: '#3399cc'
+          },
+          handler: function(response) {
+            console.log('Subscription payment successful:', response);
+            setMessage('Monthly subscription activated successfully! Thank you for your recurring donation.');
+            setIsLoading(false);
+            
+            // Reset form after successful payment
+            setTimeout(() => {
+              setFormData({
+                amount: '',
+                name: '',
+                email: '',
+                phone: '',
+                frequency: 'One-time'
+              });
+              setMessage('');
+            }, 5000);
+          },
+          modal: {
+            ondismiss: function() {
+              setMessage('Subscription payment cancelled');
+              setIsLoading(false);
+            }
+          }
+        };
+
+        console.log('Opening Razorpay subscription with options:', subscriptionOptions);
+        const rzpSubscription = new window.Razorpay(subscriptionOptions);
+        rzpSubscription.open();
 
       } else if (data.type === 'order' || data.type === 'order_with_recurring_intent') {
         // For regular orders, use Razorpay popup
@@ -246,7 +275,7 @@ function App() {
 
           {message && (
             <div className={`message ${
-              message.includes('successful') || message.includes('created') ? 'success' : 
+              message.includes('successful') || message.includes('created') || message.includes('activated') ? 'success' : 
               message.includes('Error') || message.includes('cancelled') ? 'error' : 
               'info'
             }`}>
