@@ -73,6 +73,12 @@ const Star = ({ className }) => (
   </svg>
 );
 
+const Repeat = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+  </svg>
+);
+
 // Payment Method enumeration
 const PaymentMethod = {
   RAZORPAY: 'razorpay',
@@ -220,19 +226,21 @@ const detectUserLocation = async () => {
     };
   }
 };
- function CssChevronDown() {
-      return (
-        <div style={{
-                          width: '12px',
-                          height: '12px',
-                          border: '2px solid #9ca3af',
-                          borderTop: 'none',
-                          borderLeft: 'none',
-                          transform: 'rotate(45deg)',
-                          marginTop: '-2px'
-                        }} />
-      );
-    }
+
+function CssChevronDown() {
+  return (
+    <div style={{
+      width: '12px',
+      height: '12px',
+      border: '2px solid #9ca3af',
+      borderTop: 'none',
+      borderLeft: 'none',
+      transform: 'rotate(45deg)',
+      marginTop: '-2px'
+    }} />
+  );
+}
+
 // Main App component
 function App() {
   // Modal state
@@ -258,7 +266,8 @@ function App() {
     panNumber: '',
     paymentMethod: PaymentMethod.RAZORPAY,
     selectedCurrency: 'INR',
-    user_donated_currency: 'INR'
+    user_donated_currency: 'INR',
+    frequency: 'One-time' // Added frequency field
   });
   
   // UI state
@@ -409,9 +418,12 @@ function App() {
   // Check if all mandatory fields are filled
   const areRequiredFieldsFilled = useCallback(() => {
     if (!formData.amount || formData.amount <= 0) return false;
-    if (!formData.name || !formData.email || !formData.phone) return false;
-    if (!formData.email || !isValidEmail(formData.email)) return false;
+    if (!formData.name || !formData.phone) return false;
     if (!formData.address || !formData.city || !formData.state || !formData.pincode) return false;
+    
+    // Email is required for monthly donations or if email field has been touched
+    if (formData.frequency === 'Monthly' && (!formData.email || !isValidEmail(formData.email))) return false;
+    if (hasEmailTouched && formData.email && !isValidEmail(formData.email)) return false;
     
     return true;
   }, [
@@ -422,7 +434,9 @@ function App() {
     formData.address, 
     formData.city, 
     formData.state, 
-    formData.pincode
+    formData.pincode,
+    formData.frequency,
+    hasEmailTouched
   ]);
 
   // Event handlers
@@ -481,23 +495,35 @@ function App() {
     setFormData(prev => ({ ...prev, email: value }));
     setHasEmailTouched(true);
     
-    if (!value) {
-      setEmailError("Email is required");
-    } else if (!isValidEmail(value)) {
-      setEmailError("Please enter a valid email address");
+    if (formData.frequency === 'Monthly') {
+      if (!value) {
+        setEmailError("Email is required for monthly donations");
+      } else if (!isValidEmail(value)) {
+        setEmailError("Please enter a valid email address");
+      } else {
+        setEmailError("");
+      }
     } else {
-      setEmailError("");
+      if (value && !isValidEmail(value)) {
+        setEmailError("Please enter a valid email address");
+      } else {
+        setEmailError("");
+      }
     }
-  }, []);
+  }, [formData.frequency]);
 
   const handleEmailBlur = useCallback(() => {
     setHasEmailTouched(true);
-    if (!formData.email) {
-      setEmailError("Email is required");
-    } else if (!isValidEmail(formData.email)) {
+    if (formData.frequency === 'Monthly') {
+      if (!formData.email) {
+        setEmailError("Email is required for monthly donations");
+      } else if (!isValidEmail(formData.email)) {
+        setEmailError("Please enter a valid email address");
+      }
+    } else if (formData.email && !isValidEmail(formData.email)) {
       setEmailError("Please enter a valid email address");
     }
-  }, [formData.email]);
+  }, [formData.email, formData.frequency]);
 
   const handlePincodeChange = useCallback((e) => {
     if (formData.country === "India") {
@@ -520,6 +546,31 @@ function App() {
   const handleAnonymousToggle = useCallback((checked) => {
     setFormData(prev => ({ ...prev, isAnonymous: checked }));
   }, []);
+
+  // Handle frequency selection
+  const handleFrequencyChange = useCallback((frequency) => {
+    setFormData(prev => ({ ...prev, frequency }));
+    
+    // If switching to monthly, ensure email validation
+    if (frequency === 'Monthly' && hasEmailTouched) {
+      if (!formData.email) {
+        setEmailError("Email is required for monthly donations");
+      } else if (!isValidEmail(formData.email)) {
+        setEmailError("Please enter a valid email address");
+      } else {
+        setEmailError("");
+      }
+    } else if (frequency === 'One-time') {
+      // Clear email error if switching to one-time (email becomes optional)
+      if (formData.email && isValidEmail(formData.email)) {
+        setEmailError("");
+      } else if (formData.email && !isValidEmail(formData.email)) {
+        setEmailError("Please enter a valid email address");
+      } else if (!formData.email) {
+        setEmailError("");
+      }
+    }
+  }, [formData.email, hasEmailTouched]);
 
   // Handle citizenship selection
   const handleCitizenshipSelect = useCallback((isIndian) => {
@@ -712,20 +763,40 @@ function App() {
     }
   }, [currentStep, formData.isIndian]);
 
+  // Form validation for submission
+  const validateForm = useCallback(() => {
+    if (!formData.amount || !formData.name) {
+      setMessage('Please fill in all required fields');
+      return false;
+    }
+
+    if (formData.frequency === 'Monthly' && !formData.email) {
+      setMessage('Email is required for monthly donations');
+      return false;
+    }
+
+    const amount = parseFloat(formData.amount);
+    if (isNaN(amount) || amount <= 0) {
+      setMessage('Please enter a valid amount');
+      return false;
+    }
+
+    const isPhoneValid = validatePhoneNumber(formData.phone, formData.countryCode);
+    if (formData.isIndian && formData.paymentMethod === PaymentMethod.RAZORPAY && !isPhoneValid) {
+      setMessage('Please enter a valid phone number');
+      return false;
+    }
+
+    return true;
+  }, [formData]);
+
   // Handle form submission
   const handleSubmit = useCallback(async (e) => {
     if (e) e.preventDefault();
     
     if (uiState.isSubmitting) return;
     
-    const isPhoneValid = validatePhoneNumber(formData.phone, formData.countryCode);
-
-    if (formData.isIndian && formData.paymentMethod === PaymentMethod.RAZORPAY) {
-      if (!isPhoneValid) {
-        setMessage('Please enter a valid phone number');
-        return;
-      }
-    }
+    if (!validateForm()) return;
     
     if (!areRequiredFieldsFilled()) {
       setMessage('Please fill in all required fields.');
@@ -738,6 +809,8 @@ function App() {
     // Initiate payment based on selected payment method
     if (formData.paymentMethod === PaymentMethod.RAZORPAY) {
       try {
+        console.log('Sending payment request:', formData);
+
         const response = await fetch(`${API_BASE_URL}/api/create-order`, {
           method: 'POST',
           headers: {
@@ -749,7 +822,174 @@ function App() {
             email: formData.email,
             phone: formData.phone,
             currency: 'INR',
-            frequency: 'One-time'
+            frequency: formData.frequency
+          })
+        });
+
+        const data = await response.json();
+        console.log('Payment response:', data);
+
+        if (!response.ok) {
+          throw new Error(data.message || data.error || 'Failed to process payment');
+        }
+
+        // Handle different response types properly
+        if (data.type === 'subscription') {
+          // For subscriptions, use Razorpay popup with subscription_id
+          const subscriptionOptions = {
+            key: 'rzp_test_4nEyceM4GUQmPk',
+            subscription_id: data.subscription_id,
+            amount: data.amount,
+            currency: data.currency,
+            name: 'Your Organization',
+            description: `Monthly Donation - ₹${formData.amount}`,
+            prefill: {
+              name: formData.name,
+              email: formData.email,
+              contact: formData.phone
+            },
+            theme: {
+              color: '#3399cc'
+            },
+            handler: function(response) {
+              console.log('Subscription payment successful:', response);
+              setMessage('Monthly subscription activated successfully! Thank you for your recurring donation.');
+              setUiState(prev => ({ ...prev, isSubmitting: false }));
+              
+              // Reset form after successful payment
+              setTimeout(() => {
+                setFormData({
+                  amount: 0,
+                  localAmount: 0,
+                  customAmount: "",
+                  name: "",
+                  email: "",
+                  phone: "",
+                  isAnonymous: false,
+                  country: "India",
+                  countryCode: "+91",
+                  isIndian: true,
+                  address: '',
+                  city: '',
+                  state: '',
+                  pincode: '',
+                  panNumber: '',
+                  paymentMethod: PaymentMethod.RAZORPAY,
+                  selectedCurrency: 'INR',
+                  user_donated_currency: 'INR',
+                  frequency: 'One-time'
+                });
+                setMessage('');
+                setIsModalOpen(false);
+              }, 3000);
+            },
+            modal: {
+              ondismiss: function() {
+                setMessage('Subscription payment cancelled');
+                setUiState(prev => ({ ...prev, isSubmitting: false }));
+              }
+            }
+          };
+
+          console.log('Opening Razorpay subscription with options:', subscriptionOptions);
+          const rzpSubscription = new window.Razorpay(subscriptionOptions);
+          rzpSubscription.open();
+
+        } else if (data.type === 'order' || data.type === 'order_with_recurring_intent') {
+          // For regular orders, use Razorpay popup
+          const options = {
+            key: 'rzp_test_4nEyceM4GUQmPk',
+            amount: data.amount,
+            currency: data.currency,
+            name: 'Your Organization',
+            description: formData.frequency === 'Monthly' ? 
+              `Monthly Donation - ₹${formData.amount}` : 
+              `Donation - ₹${formData.amount}`,
+            order_id: data.id,
+            prefill: {
+              name: formData.name,
+              email: formData.email,
+              contact: formData.phone
+            },
+            theme: {
+              color: '#3399cc'
+            },
+            handler: function(response) {
+              console.log('Payment successful:', response);
+              const successMessage = formData.frequency === 'Monthly' ? 
+                'Monthly donation processed successfully! We will set up recurring payments.' :
+                'Thank you for your generous donation!';
+              setMessage(successMessage);
+              setUiState(prev => ({ ...prev, isSubmitting: false }));
+              
+              // Reset form after successful payment
+              setTimeout(() => {
+                setFormData({
+                  amount: 0,
+                  localAmount: 0,
+                  customAmount: "",
+                  name: "",
+                  email: "",
+                  phone: "",
+                  isAnonymous: false,
+                  country: "India",
+                  countryCode: "+91",
+                  isIndian: true,
+                  address: '',
+                  city: '',
+                  state: '',
+                  pincode: '',
+                  panNumber: '',
+                  paymentMethod: PaymentMethod.RAZORPAY,
+                  selectedCurrency: 'INR',
+                  user_donated_currency: 'INR',
+                  frequency: 'One-time'
+                });
+                setMessage('');
+                setIsModalOpen(false);
+              }, 3000);
+            },
+            modal: {
+              ondismiss: function() {
+                setMessage('Payment cancelled');
+                setUiState(prev => ({ ...prev, isSubmitting: false }));
+              }
+            }
+          };
+
+          console.log('Opening Razorpay with options:', options);
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+
+        } else {
+          throw new Error('Unexpected response type from server');
+        }
+
+      } catch (error) {
+        console.error('Razorpay payment error:', error);
+        setMessage(`Error: ${error.message}`);
+        setUiState(prev => ({ ...prev, isSubmitting: false }));
+      }
+    } else if (formData.paymentMethod === PaymentMethod.STRIPE) {
+      if (!stripeLoaded) {
+        setMessage('Stripe is still loading. Please try again in a moment.');
+        setUiState(prev => ({ ...prev, isSubmitting: false }));
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/create-stripe-payment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            amount: formData.amount,
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            currency: formData.selectedCurrency,
+            frequency: formData.frequency
           })
         });
 
@@ -759,116 +999,26 @@ function App() {
           throw new Error(data.message || data.error || 'Failed to process payment');
         }
 
-        const options = {
-          key: 'rzp_test_4nEyceM4GUQmPk',
-          amount: data.amount,
-          currency: data.currency,
-          name: 'Your Organization',
-          description: `Donation - ₹${formData.amount}`,
-          order_id: data.id,
-          prefill: {
-            name: formData.name,
-            email: formData.email,
-            contact: formData.phone
-          },
-          theme: {
-            color: '#3399cc'
-          },
-          handler: function(response) {
-            setMessage('Thank you for your generous donation!');
-            setUiState(prev => ({ ...prev, isSubmitting: false }));
-            
-            // Reset form
-            setTimeout(() => {
-              setFormData({
-                amount: 0,
-                localAmount: 0,
-                customAmount: "",
-                name: "",
-                email: "",
-                phone: "",
-                isAnonymous: false,
-                country: "India",
-                countryCode: "+91",
-                isIndian: true,
-                address: '',
-                city: '',
-                state: '',
-                pincode: '',
-                panNumber: '',
-                paymentMethod: PaymentMethod.RAZORPAY,
-                selectedCurrency: 'INR',
-                user_donated_currency: 'INR'
-              });
-              setMessage('');
-              setIsModalOpen(false);
-            }, 3000);
-          },
-          modal: {
-            ondismiss: function() {
-              setMessage('Payment cancelled');
+        const stripe = window.Stripe('pk_test_51HvTSXFpsHIe6pnDbw5m9BPMOsB2jyH8daLjSU5Bnh58CaRtpTpgCMebRcW06Ccy9rGYP5RM2l1Toz8u3JeWGoGR00WpEFaF5M');
+
+        if (data.type === 'checkout') {
+          stripe.redirectToCheckout({
+            sessionId: data.id
+          }).then(function (result) {
+            if (result.error) {
+              setMessage(`Error: ${result.error.message}`);
               setUiState(prev => ({ ...prev, isSubmitting: false }));
             }
-          }
-        };
-
-        const rzp = new window.Razorpay(options);
-        rzp.open();
+          });
+        }
 
       } catch (error) {
-        console.error('Razorpay payment error:', error);
+        console.error('Stripe payment error:', error);
         setMessage(`Error: ${error.message}`);
         setUiState(prev => ({ ...prev, isSubmitting: false }));
       }
-    } else if (formData.paymentMethod === PaymentMethod.STRIPE) {
-        if (!stripeLoaded) {
-            setMessage('Stripe is still loading. Please try again in a moment.');
-            setUiState(prev => ({ ...prev, isSubmitting: false }));
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/create-stripe-payment`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    amount: formData.amount,
-                    name: formData.name,
-                    email: formData.email,
-                    phone: formData.phone,
-                    currency: formData.selectedCurrency,
-                    frequency: 'One-time'
-                })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || data.error || 'Failed to process payment');
-            }
-
-            const stripe = window.Stripe('pk_test_51HvTSXFpsHIe6pnDbw5m9BPMOsB2jyH8daLjSU5Bnh58CaRtpTpgCMebRcW06Ccy9rGYP5RM2l1Toz8u3JeWGoGR00WpEFaF5M');
-
-            if (data.type === 'checkout') {
-                stripe.redirectToCheckout({
-                    sessionId: data.id
-                }).then(function (result) {
-                    if (result.error) {
-                        setMessage(`Error: ${result.error.message}`);
-                        setUiState(prev => ({ ...prev, isSubmitting: false }));
-                    }
-                });
-            }
-
-        } catch (error) {
-            console.error('Stripe payment error:', error);
-            setMessage(`Error: ${error.message}`);
-            setUiState(prev => ({ ...prev, isSubmitting: false }));
-        }
     }
-  }, [formData, areRequiredFieldsFilled, uiState.isSubmitting, stripeLoaded]);
+  }, [formData, areRequiredFieldsFilled, uiState.isSubmitting, stripeLoaded, validateForm]);
 
   // Handle click outside to close dropdowns
   useEffect(() => {
@@ -1386,6 +1536,112 @@ function App() {
                     </div>
                   </div>
 
+                  {/* Frequency Selection */}
+                  <div style={{ marginBottom: '24px' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+                      <h2 style={{
+                        fontSize: '20px',
+                        fontWeight: 'bold',
+                        color: '#374151',
+                        marginBottom: '8px'
+                      }}>
+                        Donation Type
+                      </h2>
+                      <p style={{
+                        color: '#6b7280',
+                        fontSize: '14px'
+                      }}>
+                        Choose your preferred donation frequency
+                      </p>
+                    </div>
+                    
+                    <div style={{
+                      display: 'flex',
+                      gap: '12px',
+                      marginBottom: '16px'
+                    }}>
+                      <button
+                        type="button"
+                        onClick={() => handleFrequencyChange('One-time')}
+                        style={{
+                          flex: '1',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '12px 16px',
+                          borderRadius: '12px',
+                          border: formData.frequency === 'One-time' ? '2px solid #f59e0b' : '1px solid #e5e7eb',
+                          backgroundColor: formData.frequency === 'One-time' ? '#fef3c7' : 'white',
+                          color: formData.frequency === 'One-time' ? '#d97706' : '#374151',
+                          cursor: 'pointer',
+                          fontWeight: formData.frequency === 'One-time' ? 'bold' : 'normal',
+                          fontSize: '14px',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <Heart style={{ height: '16px', width: '16px', marginRight: '8px' }} />
+                        One-time
+                      </button>
+                      
+                      <button
+                        type="button"
+                        onClick={() => handleFrequencyChange('Monthly')}
+                        style={{
+                          flex: '1',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '12px 16px',
+                          borderRadius: '12px',
+                          border: formData.frequency === 'Monthly' ? '2px solid #10b981' : '1px solid #e5e7eb',
+                          backgroundColor: formData.frequency === 'Monthly' ? '#d1fae5' : 'white',
+                          color: formData.frequency === 'Monthly' ? '#047857' : '#374151',
+                          cursor: 'pointer',
+                          fontWeight: formData.frequency === 'Monthly' ? 'bold' : 'normal',
+                          fontSize: '14px',
+                          transition: 'all 0.2s ease',
+                          position: 'relative'
+                        }}
+                      >
+                        <Repeat style={{ height: '16px', width: '16px', marginRight: '8px' }} />
+                        Monthly
+                        {formData.frequency === 'Monthly' && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '-6px',
+                            right: '-6px',
+                            backgroundColor: '#10b981',
+                            fontSize: '10px',
+                            fontWeight: 'bold',
+                            padding: '2px 6px',
+                            borderRadius: '20px',
+                            color: 'white'
+                          }}>
+                            Recurring
+                          </div>
+                        )}
+                      </button>
+                    </div>
+                    
+                    {formData.frequency === 'Monthly' && (
+                      <div style={{
+                        backgroundColor: '#d1fae5',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        border: '1px solid #a7f3d0'
+                      }}>
+                        <p style={{
+                          fontSize: '12px',
+                          color: '#047857',
+                          margin: '0',
+                          textAlign: 'center'
+                        }}>
+                          Monthly donations help us plan better and have greater impact. You can cancel anytime.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Currency Selector - Only for Stripe */}
                   {formData.paymentMethod === PaymentMethod.STRIPE && (
                     <div style={{ marginBottom: '24px' }}>
@@ -1423,7 +1679,6 @@ function App() {
                             </span>
                           </span>
                           <CssChevronDown />
-
                         </button>
                         
                         {uiState.showCurrencyDropdown && (
@@ -1505,7 +1760,9 @@ function App() {
                         color: '#6b7280',
                         fontSize: '14px'
                       }}>
-                        Every contribution makes a meaningful difference
+                        {formData.frequency === 'Monthly' 
+                          ? 'Every contribution makes a recurring difference' 
+                          : 'Every contribution makes a meaningful difference'}
                       </p>
                     </div>
                     
@@ -1565,7 +1822,14 @@ function App() {
                               </span>
                             </div>
                           )}
-                          {currencySymbol}{Math.round(Number(amount)).toLocaleString()}
+                          <div style={{ marginBottom: '4px' }}>
+                            {currencySymbol}{Math.round(Number(amount)).toLocaleString()}
+                          </div>
+                          {formData.frequency === 'Monthly' && (
+                            <div style={{ fontSize: '10px', opacity: '0.8' }}>
+                              per month
+                            </div>
+                          )}
                         </button>
                       ))}
                     </div>
@@ -1576,7 +1840,7 @@ function App() {
                         type="number"
                         value={formData.customAmount}
                         onChange={(e) => handleCustomAmount(e.target.value)}
-                        placeholder="Enter custom amount"
+                        placeholder={`Enter custom amount ${formData.frequency === 'Monthly' ? '(per month)' : ''}`}
                         min="1"
                         step="1"
                         style={{
@@ -1807,7 +2071,7 @@ function App() {
                           color: '#374151',
                           marginBottom: '6px'
                         }}>
-                          Email Address <span style={{ color: '#ef4444' }}>*</span>
+                          Email Address {formData.frequency === 'Monthly' ? <span style={{ color: '#ef4444' }}>*</span> : '(Optional)'}
                         </label>
                         <input
                           type="email"
@@ -1825,7 +2089,7 @@ function App() {
                             fontSize: '16px',
                             outline: 'none'
                           }}
-                          required
+                          required={formData.frequency === 'Monthly'}
                         />
                         {hasEmailTouched && emailError && (
                           <p style={{
@@ -1834,6 +2098,15 @@ function App() {
                             marginTop: '4px'
                           }}>
                             {emailError}
+                          </p>
+                        )}
+                        {formData.frequency === 'Monthly' && (
+                          <p style={{
+                            fontSize: '12px',
+                            color: '#6b7280',
+                            marginTop: '4px'
+                          }}>
+                            Email required for monthly subscription management
                           </p>
                         )}
                       </div>
@@ -2018,7 +2291,7 @@ function App() {
                                 </span>
                                 <span style={{ fontWeight: '600', color: '#374151' }}>{formData.country}</span>
                               </span>
-                                <CssChevronDown />
+                              <CssChevronDown />
                             </button>
                             
                             {uiState.showCountryDropdown && (
@@ -2142,7 +2415,7 @@ function App() {
                       border: 'none',
                       cursor: areRequiredFieldsFilled() && !uiState.isSubmitting ? 'pointer' : 'not-allowed',
                       backgroundColor: areRequiredFieldsFilled() && !uiState.isSubmitting
-                        ? '#f59e0b' 
+                        ? (formData.frequency === 'Monthly' ? '#10b981' : '#f59e0b')
                         : '#e5e7eb',
                       color: areRequiredFieldsFilled() && !uiState.isSubmitting
                         ? 'white'
@@ -2158,8 +2431,13 @@ function App() {
                       </div>
                     ) : (
                       <span style={{ display: 'flex', alignItems: 'center' }}>
-                        <Heart style={{ height: '20px', width: '20px', marginRight: '12px' }} />
-                        Donate {currencySymbol}{Math.round(formData.localAmount).toLocaleString()}
+                        {formData.frequency === 'Monthly' ? (
+                          <Repeat style={{ height: '20px', width: '20px', marginRight: '12px' }} />
+                        ) : (
+                          <Heart style={{ height: '20px', width: '20px', marginRight: '12px' }} />
+                        )}
+                        {formData.frequency === 'Monthly' ? 'Start Monthly Donation' : 'Donate'} {currencySymbol}{Math.round(formData.localAmount).toLocaleString()}
+                        {formData.frequency === 'Monthly' && <span style={{ fontSize: '14px', marginLeft: '4px', opacity: '0.8' }}>/month</span>}
                       </span>
                     )}
                   </button>
@@ -2244,7 +2522,7 @@ function App() {
                 textAlign: 'center',
                 fontSize: '14px',
                 fontWeight: '500',
-                ...(message.includes('successful') || message.includes('Thank you') 
+                ...(message.includes('successful') || message.includes('Thank you') || message.includes('activated')
                   ? { backgroundColor: '#d1fae5', color: '#065f46', border: '1px solid #a7f3d0' }
                   : message.includes('Error') || message.includes('cancelled') 
                   ? { backgroundColor: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5' }
@@ -2261,4 +2539,3 @@ function App() {
 }
     
 export default App;
-
