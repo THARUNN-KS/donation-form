@@ -21,7 +21,7 @@ try {
 // Determine allowed origins based on environment
 const allowedOrigins = [
   'http://localhost:3000',  // Development
-  'https://donation-form-j142.vercel.app',  // Production
+  'https://donation-form-j142-git-stripe-tharunn-ks-projects.vercel.app',  // Production
   // Add any other domains you might use
 ];
 
@@ -229,8 +229,8 @@ if (stripe) {
               },
             ],
             mode: 'subscription',
-            success_url: 'https://donation-form-j142.vercel.app/success?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url: 'https://donation-form-j142.vercel.app/cancel',
+            success_url: 'https://donation-form-j142-git-stripe-tharunn-ks-projects.vercel.app/success?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url: 'https://donation-form-j142-git-stripe-tharunn-ks-projects.vercel.app/cancel',
             customer_email: email,
             metadata: {
               donation_type: 'monthly_recurring',
@@ -277,8 +277,8 @@ if (stripe) {
             },
           ],
           mode: 'payment',
-          success_url: 'https://donation-form-j142.vercel.app/success?session_id={CHECKOUT_SESSION_ID}',
-          cancel_url: 'https://donation-form-j142.vercel.app/cancel',
+          success_url: 'https://donation-form-j142-git-stripe-tharunn-ks-projects.vercel.app/success?session_id={CHECKOUT_SESSION_ID}',
+          cancel_url: 'https://donation-form-j142-git-stripe-tharunn-ks-projects.vercel.app/cancel',
           customer_email: email || undefined,
           metadata: {
             donation_type: 'one_time',
@@ -629,7 +629,7 @@ async function createRazorpaySubscription(razorpay, amount, name = '', email = '
             donation_type: 'recurring',
             source: 'Donation Website'
           },
-          callback_url: 'https://donation-form-j142.vercel.app',
+          callback_url: 'https://donation-form-j142-git-stripe-tharunn-ks-projects.vercel.app',
           callback_method: 'get'
         };
 

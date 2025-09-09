@@ -62,8 +62,8 @@ export default async function handler(req, res) {
             },
           ],
           mode: 'subscription',
-          success_url: 'https://donation-form-j142.vercel.app/success?session_id={CHECKOUT_SESSION_ID}',
-          cancel_url: 'https://donation-form-j142.vercel.app/cancel',
+          success_url: 'https://donation-form-j142-git-stripe-tharunn-ks-projects.vercel.app/success?session_id={CHECKOUT_SESSION_ID}',
+          cancel_url: 'https://donation-form-j142-git-stripe-tharunn-ks-projects.vercel.app/cancel',
           customer_email: email,
           metadata: {
             donation_type: 'monthly_recurring',
@@ -112,8 +112,8 @@ export default async function handler(req, res) {
           },
         ],
         mode: 'payment',
-        success_url: 'https://donation-form-j142.vercel.app/success?session_id={CHECKOUT_SESSION_ID}',
-        cancel_url: 'https://donation-form-j142.vercel.app/cancel',
+        success_url: 'https://donation-form-j142-git-stripe-tharunn-ks-projects.vercel.app/success?session_id={CHECKOUT_SESSION_ID}',
+        cancel_url: 'https://donation-form-j142-git-stripe-tharunn-ks-projects.vercel.app/cancel',
         customer_email: email || undefined,
         metadata: {
           donation_type: 'one_time',

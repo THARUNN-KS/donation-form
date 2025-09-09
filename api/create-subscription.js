@@ -306,7 +306,7 @@ async function createRazorpaySubscription(razorpay, amount, name = '', email = '
             donation_type: 'recurring',
             source: 'Donation Website'
           },
-          callback_url: 'https://donation-form-j142.vercel.app',
+          callback_url: 'donation-form-j142-git-stripe-tharunn-ks-projects.vercel.app',
           callback_method: 'get'
         };
 
