@@ -1,291 +1,210 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 // Near the top of your App.js file
 const API_BASE_URL = process.env.NODE_ENV === 'development' 
   ? 'http://localhost:5001' 
   : 'https://donation-form-j142-git-stripe-tharunn-ks-projects.vercel.app';
 
-// Icons as simple SVG components
+// --- SVG ICONS ---
 const ArrowLeft = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 12H5m7-7l-7 7 7 7" />
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
   </svg>
 );
-
 const ArrowRight = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14m-7-7l7 7-7 7" />
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
   </svg>
 );
-
 const Heart = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
   </svg>
 );
-
 const Lock = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
   </svg>
 );
-
 const Loader2 = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24">
-    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4m-2.83 9.07l-2.83-2.83M7.76 7.76L4.93 4.93" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
-
 const ShieldCheck = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
   </svg>
 );
-
 const Shield = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
   </svg>
 );
-
 const Building = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
   </svg>
 );
 
-const CheckCircle = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
-  </svg>
-);
-
-const Star = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
-  </svg>
-);
-
-const Repeat = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-  </svg>
-);
-
-// Payment Method enumeration
-const PaymentMethod = {
-  RAZORPAY: 'razorpay',
-  STRIPE: 'stripe'
-};
-
-// Default donation amounts (INR)
+// --- CONSTANTS AND CONFIG ---
+const PaymentMethod = { RAZORPAY: 'razorpay', STRIPE: 'stripe' };
 const DEFAULT_DONATION_AMOUNTS = [42000, 12000, 2000];
-
-// Country codes for phone validation
 const COUNTRY_CODES = [
-  { country: "India", code: "+91", flag: "🇮🇳" },
-  { country: "United States", code: "+1", flag: "🇺🇸" },
-  { country: "United Kingdom", code: "+44", flag: "🇬🇧" },
-  { country: "Canada", code: "+1", flag: "🇨🇦" },
-  { country: "Australia", code: "+61", flag: "🇦🇺" },
-  { country: "Germany", code: "+49", flag: "🇩🇪" },
-  { country: "France", code: "+33", flag: "🇫🇷" },
-  { country: "Japan", code: "+81", flag: "🇯🇵" },
-  { country: "Singapore", code: "+65", flag: "🇸🇬" },
-  { country: "UAE", code: "+971", flag: "🇦🇪" }
+  { country: "India", code: "+91", flag: "🇮🇳" }, { country: "United States", code: "+1", flag: "🇺🇸" },
+  { country: "United Kingdom", code: "+44", flag: "🇬🇧" }, { country: "Canada", code: "+1", flag: "🇨🇦" },
+  { country: "Australia", code: "+61", flag: "🇦🇺" }, { country: "Germany", code: "+49", flag: "🇩🇪" },
+  { country: "France", code: "+33", flag: "🇫🇷" }, { country: "Japan", code: "+81", flag: "🇯🇵" },
+  { country: "Singapore", code: "+65", flag: "🇸🇬" }, { country: "UAE", code: "+971", flag: "🇦🇪" }
 ];
-
-// Trust badges with premium design
 const TRUST_BADGES = [
-  {
-    icon: ShieldCheck,
-    title: "Bank-Level Security",
-    description: "256-bit SSL encryption"
-  },
-  {
-    icon: Shield,
-    title: "Tax Benefits",
-    description: "80G tax exemption"
-  },
-  {
-    icon: Building,
-    title: "Verified NGO",
-    description: "Government registered"
-  }
+  { icon: ShieldCheck, title: "Bank-Level Security", description: "256-bit SSL encryption" },
+  { icon: Shield, title: "Tax Benefits", description: "80G tax exemption" },
+  { icon: Building, title: "Verified NGO", description: "Government registered" }
 ];
 
-// Utility functions
-const isValidEmail = (email) => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
+// --- UTILITY FUNCTIONS ---
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 const validatePhoneNumber = (phone, countryCode) => {
   if (!phone) return false;
-  
-  // Remove all non-digits
   const cleanPhone = phone.replace(/\D/g, '');
-  
-  // Basic validation based on country code
   switch (countryCode) {
-    case '+91': // India
-      return cleanPhone.length === 10 && /^[6-9]/.test(cleanPhone);
-    case '+1': // US/Canada
-      return cleanPhone.length === 10;
-    case '+44': // UK
-      return cleanPhone.length >= 10 && cleanPhone.length <= 11;
-    default:
-      return cleanPhone.length >= 7 && cleanPhone.length <= 15;
+    case '+91': return cleanPhone.length === 10 && /^[6-9]/.test(cleanPhone);
+    case '+1': return cleanPhone.length === 10;
+    case '+44': return cleanPhone.length >= 10 && cleanPhone.length <= 11;
+    default: return cleanPhone.length >= 7 && cleanPhone.length <= 15;
   }
 };
 
-function CssChevronDown() {
-  return (
-    <div style={{
-      width: '12px',
-      height: '12px',
-      border: '2px solid #9ca3af',
-      borderTop: 'none',
-      borderLeft: 'none',
-      transform: 'rotate(45deg)',
-      marginTop: '-2px'
-    }} />
-  );
-}
+// --- RESPONSIVE HOOK ---
+const useWindowSize = () => {
+  const [windowSize, setWindowSize] = useState({
+    width: undefined,
+    height: undefined,
+  });
+  useEffect(() => {
+    function handleResize() {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    }
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  return windowSize;
+};
 
-// Main App component
+// --- DESKTOP INFO PANEL COMPONENT ---
+const LeftInfoPanel = () => {
+    const PRIMARY_COLOR = '#4f46e5';
+    const TEXT_COLOR_DARK = '#1f2937';
+    const TEXT_COLOR_LIGHT = '#6b7280';
+
+    return (
+        <div style={{
+            width: '380px',
+            backgroundColor: '#f9fafb',
+            padding: '40px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            borderRight: '1px solid #e5e7eb'
+        }}>
+            <div>
+              <div style={{ width: '64px', height: '64px', backgroundColor: PRIMARY_COLOR, borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
+                  <Heart style={{ height: '32px', width: '32px', color: 'white' }} />
+              </div>
+              <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: TEXT_COLOR_DARK, marginBottom: '12px' }}>Support Our Cause</h1>
+              <p style={{ fontSize: '16px', color: TEXT_COLOR_LIGHT, lineHeight: '1.6' }}>
+                  Your generous donation helps us continue our mission. Every contribution makes a significant impact.
+              </p>
+            </div>
+            <div>
+              <h3 style={{fontSize: '14px', color: TEXT_COLOR_DARK, marginBottom: '16px', borderTop: '1px solid #e5e7eb', paddingTop: '24px'}}>Your Donation is Secure</h3>
+              {TRUST_BADGES.map((badge, index) => (
+                  <div key={index} style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+                      <div style={{
+                        width: '32px', height: '32px', backgroundColor: '#eef2ff', borderRadius: '8px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '12px', flexShrink: 0
+                      }}>
+                          <badge.icon style={{ height: '16px', width: '16px', color: PRIMARY_COLOR }} />
+                      </div>
+                      <div>
+                          <h4 style={{ fontSize: '14px', fontWeight: '600', color: TEXT_COLOR_DARK, margin: 0 }}>{badge.title}</h4>
+                          <p style={{ fontSize: '12px', color: TEXT_COLOR_LIGHT, margin: 0 }}>{badge.description}</p>
+                      </div>
+                  </div>
+              ))}
+            </div>
+        </div>
+    );
+};
+
+
+// --- MAIN APP COMPONENT ---
 function App() {
-  // Form state - defaults to Indian citizen with INR
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    amount: 12000, // Default middle amount
-    localAmount: 12000,
-    customAmount: "",
-    name: "",
-    email: "",
-    phone: "",
-    isAnonymous: false,
-    country: "India",
-    countryCode: "+91",
-    isIndian: true,
-    address: '',
-    city: '',
-    state: '',
-    pincode: '',
-    panNumber: '',
-    paymentMethod: PaymentMethod.RAZORPAY,
-    selectedCurrency: 'INR',
-    user_donated_currency: 'INR',
-                      frequency: 'Monthly'
+    amount: 12000, localAmount: 12000, customAmount: "", name: "", email: "", phone: "",
+    isAnonymous: false, country: "India", countryCode: "+91", isIndian: true,
+    address: '', city: '', state: '', pincode: '', panNumber: '',
+    paymentMethod: PaymentMethod.RAZORPAY, selectedCurrency: 'INR',
+    user_donated_currency: 'INR', frequency: 'One-time'
   });
-  
-  // UI state
   const [uiState, setUiState] = useState({
-    isSubmitting: false,
-    isCustomAmount: false,
-    showCountryCodeDropdown: false,
+    isSubmitting: false, isCustomAmount: false, showCountryCodeDropdown: false,
     countryCodeSearchQuery: ''
   });
-  
-  // Other state
-  const [stripeLoaded, setStripeLoaded] = useState(false);
   const [message, setMessage] = useState('');
   const [hasTouchedPhone, setHasTouchedPhone] = useState(false);
   const [phoneError, setPhoneError] = useState('');
   const [emailError, setEmailError] = useState("");
   const [hasEmailTouched, setHasEmailTouched] = useState(false);
 
-  // Load payment gateway scripts dynamically
+  // --- HOOKS & LOGIC ---
+  const { width } = useWindowSize();
+  const isDesktop = width >= 880;
+
   useEffect(() => {
-    // Load Razorpay script
     const razorpayScript = document.createElement('script');
     razorpayScript.src = 'https://checkout.razorpay.com/v1/checkout.js';
     razorpayScript.async = true;
     document.body.appendChild(razorpayScript);
-
-    // Load Stripe script
     const stripeScript = document.createElement('script');
     stripeScript.src = 'https://js.stripe.com/v3/';
     stripeScript.async = true;
-    stripeScript.onload = () => setStripeLoaded(true);
     document.body.appendChild(stripeScript);
   }, []);
 
-  // Filter country codes based on search query
   const filteredCountryCodes = useMemo(() => {
-    let filtered = [...COUNTRY_CODES];
-    
-    if (uiState.countryCodeSearchQuery && uiState.countryCodeSearchQuery.trim() !== '') {
-      const query = uiState.countryCodeSearchQuery.toLowerCase().trim();
-      filtered = filtered.filter(code => 
-        code.country.toLowerCase().includes(query) || 
-        code.code.replace('+', '').includes(query)
-      );
-    }
-    
-    return filtered;
+    if (!uiState.countryCodeSearchQuery.trim()) return COUNTRY_CODES;
+    const query = uiState.countryCodeSearchQuery.toLowerCase().trim();
+    return COUNTRY_CODES.filter(c => c.country.toLowerCase().includes(query) || c.code.replace('+', '').includes(query));
   }, [uiState.countryCodeSearchQuery]);
 
-  // Check if required fields for step 2 are filled
   const areStep2FieldsFilled = useCallback(() => {
-    if (!formData.name || !formData.phone) return false;
-    if (!formData.address || !formData.city || !formData.state || !formData.pincode) return false;
-    
-    // Email is required for monthly donations
+    if (!formData.name || !formData.phone || !formData.address || !formData.city || !formData.state || !formData.pincode) return false;
     if (formData.frequency === 'Monthly' && (!formData.email || !isValidEmail(formData.email))) return false;
     if (hasEmailTouched && formData.email && !isValidEmail(formData.email)) return false;
-    
     return true;
-  }, [
-    formData.name, 
-    formData.email, 
-    formData.phone, 
-    formData.address, 
-    formData.city, 
-    formData.state, 
-    formData.pincode,
-    formData.frequency,
-    hasEmailTouched
-  ]);
+  }, [formData, hasEmailTouched]);
 
-  // Event handlers
   const handleAmountSelect = useCallback((amount) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      amount: amount,
-      localAmount: amount,
-      customAmount: ""
-    }));
+    setFormData(prev => ({ ...prev, amount, localAmount: amount, customAmount: "" }));
     setUiState(prev => ({ ...prev, isCustomAmount: false }));
   }, []);
 
   const handleCustomAmount = useCallback((value) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      customAmount: value
-    }));
-    
+    setFormData(prev => ({ ...prev, customAmount: value }));
     if (value) {
       setUiState(prev => ({ ...prev, isCustomAmount: true }));
-      
       const numValue = Number(value);
       if (!isNaN(numValue) && numValue >= 0) {
         const roundedAmount = Math.round(numValue);
-        
-        setFormData(prev => ({
-          ...prev,
-          localAmount: roundedAmount,
-          amount: roundedAmount
-        }));
+        setFormData(prev => ({ ...prev, localAmount: roundedAmount, amount: roundedAmount }));
       }
     } else {
       setUiState(prev => ({ ...prev, isCustomAmount: false }));
-      setFormData(prev => ({ 
-        ...prev, 
-        amount: 0,
-        localAmount: 0
-      }));
+      setFormData(prev => ({ ...prev, amount: 0, localAmount: 0 }));
     }
   }, []);
 
@@ -304,32 +223,17 @@ function App() {
     const value = e.target.value;
     setFormData(prev => ({ ...prev, email: value }));
     setHasEmailTouched(true);
-    
     if (formData.frequency === 'Monthly') {
-      if (!value) {
-        setEmailError("Email is required for monthly donations");
-      } else if (!isValidEmail(value)) {
-        setEmailError("Please enter a valid email address");
-      } else {
-        setEmailError("");
-      }
+      setEmailError(!value ? "Email is required for monthly donations" : !isValidEmail(value) ? "Please enter a valid email address" : "");
     } else {
-      if (value && !isValidEmail(value)) {
-        setEmailError("Please enter a valid email address");
-      } else {
-        setEmailError("");
-      }
+      setEmailError(value && !isValidEmail(value) ? "Please enter a valid email address" : "");
     }
   }, [formData.frequency]);
 
   const handleEmailBlur = useCallback(() => {
     setHasEmailTouched(true);
     if (formData.frequency === 'Monthly') {
-      if (!formData.email) {
-        setEmailError("Email is required for monthly donations");
-      } else if (!isValidEmail(formData.email)) {
-        setEmailError("Please enter a valid email address");
-      }
+      if (!formData.email || !isValidEmail(formData.email)) setEmailError("Please enter a valid email address");
     } else if (formData.email && !isValidEmail(formData.email)) {
       setEmailError("Please enter a valid email address");
     }
@@ -337,9 +241,7 @@ function App() {
 
   const handlePincodeChange = useCallback((e) => {
     const numericValue = e.target.value.replace(/\D/g, '');
-    if (numericValue.length <= 6) {
-      setFormData(prev => ({ ...prev, pincode: numericValue }));
-    }
+    if (numericValue.length <= 6) setFormData(prev => ({ ...prev, pincode: numericValue }));
   }, []);
 
   const handlePanNumberChange = useCallback((e) => {
@@ -349,1312 +251,374 @@ function App() {
   const handleAnonymousToggle = useCallback((checked) => {
     setFormData(prev => ({ ...prev, isAnonymous: checked }));
   }, []);
-
-  // Handle frequency selection
+  
   const handleFrequencyChange = useCallback((frequency) => {
     setFormData(prev => ({ ...prev, frequency }));
-    
-    // If switching to monthly, ensure email validation
     if (frequency === 'Monthly' && hasEmailTouched) {
-      if (!formData.email) {
-        setEmailError("Email is required for monthly donations");
-      } else if (!isValidEmail(formData.email)) {
-        setEmailError("Please enter a valid email address");
-      } else {
-        setEmailError("");
-      }
+      setEmailError(!formData.email ? "Email is required for monthly donations" : !isValidEmail(formData.email) ? "Please enter a valid email address" : "");
     } else if (frequency === 'One-time') {
-      // Clear email error if switching to one-time (email becomes optional)
-      if (formData.email && isValidEmail(formData.email)) {
-        setEmailError("");
-      } else if (formData.email && !isValidEmail(formData.email)) {
-        setEmailError("Please enter a valid email address");
-      } else if (!formData.email) {
-        setEmailError("");
-      }
+      setEmailError(formData.email && !isValidEmail(formData.email) ? "Please enter a valid email address" : "");
     }
   }, [formData.email, hasEmailTouched]);
 
-  // Toggle dropdown visibility
   const toggleCountryCodeDropdown = useCallback((e) => {
     e.preventDefault();
-    const newState = !uiState.showCountryCodeDropdown;
-    
-    setUiState(prev => ({
-      ...prev,
-      showCountryCodeDropdown: newState,
-      countryCodeSearchQuery: ''
-    }));
-  }, [uiState.showCountryCodeDropdown]);
-
-  const selectCountryCode = useCallback((countryCode) => {
-    setFormData(prev => ({
-      ...prev, 
-      countryCode: countryCode.code
-    }));
-    setUiState(prev => ({
-      ...prev,
-      showCountryCodeDropdown: false,
-      countryCodeSearchQuery: ''
-    }));
+    setUiState(prev => ({ ...prev, showCountryCodeDropdown: !prev.showCountryCodeDropdown, countryCodeSearchQuery: '' }));
   }, []);
 
-  // Navigate to next step
+  const selectCountryCode = useCallback((countryCode) => {
+    setFormData(prev => ({ ...prev, countryCode: countryCode.code }));
+    setUiState(prev => ({ ...prev, showCountryCodeDropdown: false, countryCodeSearchQuery: '' }));
+  }, []);
+
   const handleNext = useCallback(() => {
-    if (currentStep === 1 && formData.amount > 0) {
-      setCurrentStep(2);
-    }
+    if (currentStep === 1 && formData.amount > 0) setCurrentStep(2);
   }, [currentStep, formData.amount]);
 
-  // Navigate back
   const handleBack = useCallback(() => {
-    if (currentStep === 2) {
-      setCurrentStep(1);
-    }
+    if (currentStep === 2) setCurrentStep(1);
   }, [currentStep]);
-
-  // Form validation for submission
+  
   const validateForm = useCallback(() => {
-    if (!formData.amount || !formData.name) {
-      setMessage('Please fill in all required fields');
-      return false;
-    }
-
-    if (formData.frequency === 'Monthly' && !formData.email) {
-      setMessage('Email is required for monthly donations');
-      return false;
-    }
-
+    if (!formData.amount || !formData.name) { setMessage('Please fill in all required fields'); return false; }
+    if (formData.frequency === 'Monthly' && !formData.email) { setMessage('Email is required for monthly donations'); return false; }
     const amount = parseFloat(formData.amount);
-    if (isNaN(amount) || amount <= 0) {
-      setMessage('Please enter a valid amount');
-      return false;
-    }
-
-    const isPhoneValid = validatePhoneNumber(formData.phone, formData.countryCode);
-    if (!isPhoneValid) {
-      setMessage('Please enter a valid phone number');
-      return false;
-    }
-
+    if (isNaN(amount) || amount <= 0) { setMessage('Please enter a valid amount'); return false; }
+    if (!validatePhoneNumber(formData.phone, formData.countryCode)) { setMessage('Please enter a valid phone number'); return false; }
     return true;
   }, [formData]);
 
-  // Handle form submission
   const handleSubmit = useCallback(async (e) => {
-    if (e) e.preventDefault();
-    
-    if (uiState.isSubmitting) return;
-    
-    if (!validateForm()) return;
-    
-    if (!areStep2FieldsFilled()) {
-      setMessage('Please fill in all required fields.');
-      return;
-    }
-    
+    e?.preventDefault();
+    if (uiState.isSubmitting || !validateForm() || !areStep2FieldsFilled()) return;
     setUiState(prev => ({ ...prev, isSubmitting: true }));
     setMessage('Processing your donation...');
-    
-    // Since we're defaulting to Indian/INR, use Razorpay
     try {
-      console.log('Sending payment request:', formData);
-
       const response = await fetch(`${API_BASE_URL}/api/create-order`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: formData.amount,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          currency: 'INR',
-          frequency: formData.frequency
+          amount: formData.amount, name: formData.name, email: formData.email,
+          phone: formData.phone, currency: 'INR', frequency: formData.frequency
         })
       });
-
       const data = await response.json();
-      console.log('Payment response:', data);
-
-      if (!response.ok) {
-        throw new Error(data.message || data.error || 'Failed to process payment');
-      }
-
-      // Handle different response types properly
+      if (!response.ok) throw new Error(data.message || data.error || 'Failed to process payment');
+      const commonOptions = {
+        key: 'rzp_test_4nEyceM4GUQmPk', amount: data.amount, currency: data.currency, name: 'Our Cause',
+        prefill: { name: formData.name, email: formData.email, contact: formData.phone },
+        theme: { color: '#4f46e5' },
+        handler: (response) => {
+          console.log('Payment successful:', response);
+          setMessage(formData.frequency === 'Monthly' ? 'Monthly subscription activated! Thank you.' : 'Thank you for your generous donation!');
+          setUiState(prev => ({ ...prev, isSubmitting: false }));
+          setTimeout(() => {
+            setFormData({
+              amount: 12000, localAmount: 12000, customAmount: "", name: "", email: "", phone: "",
+              isAnonymous: false, country: "India", countryCode: "+91", isIndian: true,
+              address: '', city: '', state: '', pincode: '', panNumber: '', paymentMethod: PaymentMethod.RAZORPAY,
+              selectedCurrency: 'INR', user_donated_currency: 'INR', frequency: 'One-time'
+            });
+            setCurrentStep(1);
+            setMessage('');
+          }, 3000);
+        },
+        modal: { ondismiss: () => { setMessage('Payment cancelled'); setUiState(prev => ({ ...prev, isSubmitting: false })); } }
+      };
+      let rzp;
       if (data.type === 'subscription') {
-        // For subscriptions, use Razorpay popup with subscription_id
-        const subscriptionOptions = {
-          key: 'rzp_test_4nEyceM4GUQmPk',
-          subscription_id: data.subscription_id,
-          amount: data.amount,
-          currency: data.currency,
-          name: 'Your Organization',
-          description: `Monthly Donation - ₹${formData.amount}`,
-          prefill: {
-            name: formData.name,
-            email: formData.email,
-            contact: formData.phone
-          },
-          theme: {
-            color: '#3399cc'
-          },
-          handler: function(response) {
-            console.log('Subscription payment successful:', response);
-            setMessage('Monthly subscription activated successfully! Thank you for your recurring donation.');
-            setUiState(prev => ({ ...prev, isSubmitting: false }));
-            
-            // Reset form after successful payment
-            setTimeout(() => {
-              setFormData({
-                amount: 12000,
-                localAmount: 12000,
-                customAmount: "",
-                name: "",
-                email: "",
-                phone: "",
-                isAnonymous: false,
-                country: "India",
-                countryCode: "+91",
-                isIndian: true,
-                address: '',
-                city: '',
-                state: '',
-                pincode: '',
-                panNumber: '',
-                paymentMethod: PaymentMethod.RAZORPAY,
-                selectedCurrency: 'INR',
-                user_donated_currency: 'INR',
-                frequency: 'One-time'
-              });
-              setCurrentStep(1);
-              setMessage('');
-            }, 3000);
-          },
-          modal: {
-            ondismiss: function() {
-              setMessage('Subscription payment cancelled');
-              setUiState(prev => ({ ...prev, isSubmitting: false }));
-            }
-          }
-        };
-
-        console.log('Opening Razorpay subscription with options:', subscriptionOptions);
-        const rzpSubscription = new window.Razorpay(subscriptionOptions);
-        rzpSubscription.open();
-
-      } else if (data.type === 'order' || data.type === 'order_with_recurring_intent') {
-        // For regular orders, use Razorpay popup
-        const options = {
-          key: 'rzp_test_4nEyceM4GUQmPk',
-          amount: data.amount,
-          currency: data.currency,
-          name: 'Your Organization',
-          description: formData.frequency === 'Monthly' ? 
-            `Monthly Donation - ₹${formData.amount}` : 
-            `Donation - ₹${formData.amount}`,
-          order_id: data.id,
-          prefill: {
-            name: formData.name,
-            email: formData.email,
-            contact: formData.phone
-          },
-          theme: {
-            color: '#3399cc'
-          },
-          handler: function(response) {
-            console.log('Payment successful:', response);
-            const successMessage = formData.frequency === 'Monthly' ? 
-              'Monthly donation processed successfully! We will set up recurring payments.' :
-              'Thank you for your generous donation!';
-            setMessage(successMessage);
-            setUiState(prev => ({ ...prev, isSubmitting: false }));
-            
-            // Reset form after successful payment
-            setTimeout(() => {
-              setFormData({
-                amount: 12000,
-                localAmount: 12000,
-                customAmount: "",
-                name: "",
-                email: "",
-                phone: "",
-                isAnonymous: false,
-                country: "India",
-                countryCode: "+91",
-                isIndian: true,
-                address: '',
-                city: '',
-                state: '',
-                pincode: '',
-                panNumber: '',
-                paymentMethod: PaymentMethod.RAZORPAY,
-                selectedCurrency: 'INR',
-                user_donated_currency: 'INR',
-                frequency: 'One-time'
-              });
-              setCurrentStep(1);
-              setMessage('');
-            }, 3000);
-          },
-          modal: {
-            ondismiss: function() {
-              setMessage('Payment cancelled');
-              setUiState(prev => ({ ...prev, isSubmitting: false }));
-            }
-          }
-        };
-
-        console.log('Opening Razorpay with options:', options);
-        const rzp = new window.Razorpay(options);
-        rzp.open();
-
+        rzp = new window.Razorpay({ ...commonOptions, subscription_id: data.subscription_id, description: `Monthly Donation` });
+      } else if (data.type === 'order') {
+        rzp = new window.Razorpay({ ...commonOptions, order_id: data.id, description: `One-time Donation` });
       } else {
         throw new Error('Unexpected response type from server');
       }
-
+      rzp.open();
     } catch (error) {
-      console.error('Razorpay payment error:', error);
+      console.error('Payment error:', error);
       setMessage(`Error: ${error.message}`);
       setUiState(prev => ({ ...prev, isSubmitting: false }));
     }
   }, [formData, areStep2FieldsFilled, uiState.isSubmitting, validateForm]);
 
-  // Handle click outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (uiState.showCountryCodeDropdown) {
-        const dropdown = document.querySelector('.country-code-dropdown-container');
-        if (dropdown && !dropdown.contains(event.target)) {
-          setUiState(prev => ({
-            ...prev,
-            showCountryCodeDropdown: false,
-            countryCodeSearchQuery: ''
-          }));
-        }
+      const dropdown = document.querySelector('.country-code-dropdown-container');
+      if (dropdown && !dropdown.contains(event.target)) {
+        setUiState(prev => ({ ...prev, showCountryCodeDropdown: false, countryCodeSearchQuery: '' }));
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [uiState.showCountryCodeDropdown]);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
+  const FONT_FAMILY = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'";
+  const PRIMARY_COLOR = '#4f46e5';
+  const BORDER_COLOR = '#e5e7eb';
+  const TEXT_COLOR_DARK = '#1f2937';
+  const TEXT_COLOR_LIGHT = '#6b7280';
+  const BG_COLOR_LIGHT = '#f9fafb';
+  
+  // --- RENDER ---
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#f5f5f5',
-      fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
-      padding: '20px'
-    }}>
-      <div style={{
-        maxWidth: '500px',
-        margin: '0 auto',
-        backgroundColor: 'white',
-        borderRadius: '24px',
-        boxShadow: '0 25px 50px rgba(0, 0, 0, 0.1)',
-        overflow: 'hidden'
+    <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', fontFamily: FONT_FAMILY, padding: '20px', boxSizing: 'border-box', display:'flex', alignItems:'center' }}>
+      <div style={{ 
+        maxWidth: isDesktop ? '880px' : '480px', 
+        width: '100%',
+        margin: 'auto', 
+        backgroundColor: 'white', 
+        borderRadius: '16px', 
+        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)', 
+        overflow: 'hidden',
+        display: isDesktop ? 'flex' : 'block'
       }}>
-        
-        {/* Step 1: Amount and Frequency Selection */}
-        {currentStep === 1 && (
-          <div>
-            {/* Header */}
-            <div style={{
-              background: 'linear-gradient(to right, #f59e0b, #f97316)',
-              color: 'white',
-              padding: '24px',
-              textAlign: 'center'
-            }}>
-              <div style={{
-                width: '64px',
-                height: '64px',
-                backgroundColor: 'rgba(255,255,255,0.2)',
-                borderRadius: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 16px'
-              }}>
-                <Heart style={{ height: '32px', width: '32px', color: 'white' }} />
-              </div>
-              <h1 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '8px', margin: 0 }}>
-                Support Our Cause
-              </h1>
-              <p style={{ fontSize: '16px', opacity: '0.9', margin: 0 }}>
-                Your donation makes a meaningful difference
-              </p>
-            </div>
+        {isDesktop && <LeftInfoPanel />}
 
-            <div style={{ padding: '24px' }}>
-              {/* Payment Method Header */}
-              <div style={{
-                background: 'linear-gradient(to right, #f59e0b, #f97316)',
-                color: 'white',
-                padding: '16px',
-                borderRadius: '16px',
-                marginBottom: '24px'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <div style={{
-                    width: '32px',
-                    height: '32px',
-                    backgroundColor: 'rgba(255,255,255,0.2)',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginRight: '12px'
-                  }}>
-                    <span style={{ fontWeight: 'bold', fontSize: '18px' }}>₹</span>
-                  </div>
-                  <div>
-                    <p style={{
-                      fontWeight: 'bold',
-                      fontSize: '14px',
-                      marginBottom: '2px',
-                      margin: 0
-                    }}>
-                      Indian Citizen - INR Payment
-                    </p>
-                    <p style={{
-                      fontSize: '12px',
-                      opacity: '0.8',
-                      margin: 0
-                    }}>
-                      Secure payment via Razorpay in INR
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Frequency Selection */}
-              <div style={{ marginBottom: '24px' }}>
-                <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                  <h2 style={{
-                    fontSize: '20px',
-                    fontWeight: 'bold',
-                    color: '#374151',
-                    marginBottom: '8px'
-                  }}>
-                    Donation Type
-                  </h2>
-                  <p style={{
-                    color: '#6b7280',
-                    fontSize: '14px'
-                  }}>
-                    Choose your preferred donation frequency
-                  </p>
-                </div>
-                
-                <div style={{
-                  display: 'flex',
-                  gap: '12px',
-                  marginBottom: '16px'
-                }}>
-                  <button
-                    type="button"
-                    onClick={() => handleFrequencyChange('One-time')}
-                    style={{
-                      flex: '1',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '12px 16px',
-                      borderRadius: '12px',
-                      border: formData.frequency === 'One-time' ? '2px solid #f59e0b' : '1px solid #e5e7eb',
-                      backgroundColor: formData.frequency === 'One-time' ? '#fef3c7' : 'white',
-                      color: formData.frequency === 'One-time' ? '#d97706' : '#374151',
-                      cursor: 'pointer',
-                      fontWeight: formData.frequency === 'One-time' ? 'bold' : 'normal',
-                      fontSize: '14px',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    <Heart style={{ height: '16px', width: '16px', marginRight: '8px' }} />
-                    One-time
-                  </button>
-                  
-                  <button
-                    type="button"
-                    onClick={() => handleFrequencyChange('Monthly')}
-                    style={{
-                      flex: '1',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '12px 16px',
-                      borderRadius: '12px',
-                      border: formData.frequency === 'Monthly' ? '2px solid #10b981' : '1px solid #e5e7eb',
-                      backgroundColor: formData.frequency === 'Monthly' ? '#d1fae5' : 'white',
-                      color: formData.frequency === 'Monthly' ? '#047857' : '#374151',
-                      cursor: 'pointer',
-                      fontWeight: formData.frequency === 'Monthly' ? 'bold' : 'normal',
-                      fontSize: '14px',
-                      transition: 'all 0.2s ease',
-                      position: 'relative'
-                    }}
-                  >
-                    <Repeat style={{ height: '16px', width: '16px', marginRight: '8px' }} />
-                    Monthly
-                    {formData.frequency === 'Monthly' && (
-                      <div style={{
-                        position: 'absolute',
-                        top: '-6px',
-                        right: '-6px',
-                        backgroundColor: '#10b981',
-                        fontSize: '10px',
-                        fontWeight: 'bold',
-                        padding: '2px 6px',
-                        borderRadius: '20px',
-                        color: 'white'
-                      }}>
-                        Recurring
-                      </div>
-                    )}
-                  </button>
-                </div>
-                
-                {formData.frequency === 'Monthly' && (
-                  <div style={{
-                    backgroundColor: '#d1fae5',
-                    borderRadius: '8px',
-                    padding: '12px',
-                    border: '1px solid #a7f3d0'
-                  }}>
-                    <p style={{
-                      fontSize: '12px',
-                      color: '#047857',
-                      margin: '0',
-                      textAlign: 'center'
-                    }}>
-                      Monthly donations help us plan better and have greater impact. You can cancel anytime.
-                    </p>
+        <div style={{ flex: 1, width: '100%', minWidth: 0 }}>
+            {currentStep === 1 && (
+              <div>
+                {!isDesktop && (
+                  <div style={{ padding: '32px', textAlign: 'center', borderBottom: `1px solid ${BORDER_COLOR}` }}>
+                    <div style={{ width: '64px', height: '64px', backgroundColor: PRIMARY_COLOR, borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                      <Heart style={{ height: '32px', width: '32px', color: 'white' }} />
+                    </div>
+                    <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: TEXT_COLOR_DARK, marginBottom: '4px', margin: 0 }}>Support Our Cause</h1>
+                    <p style={{ fontSize: '16px', color: TEXT_COLOR_LIGHT, margin: 0 }}>Your donation makes a meaningful difference.</p>
                   </div>
                 )}
-              </div>
-
-              {/* Amount Selection */}
-              <div style={{ marginBottom: '24px' }}>
-                <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                  <h2 style={{
-                    fontSize: '20px',
-                    fontWeight: 'bold',
-                    color: '#374151',
-                    marginBottom: '8px'
-                  }}>
-                    Choose Your Donation Amount
-                  </h2>
-                  <p style={{
-                    color: '#6b7280',
-                    fontSize: '14px'
-                  }}>
-                    {formData.frequency === 'Monthly' 
-                      ? 'Every contribution makes a recurring difference' 
-                      : 'Every contribution makes a meaningful difference'}
-                  </p>
-                </div>
-                
-                {/* Amount buttons */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: '12px',
-                  marginBottom: '16px'
-                }}>
-                  {DEFAULT_DONATION_AMOUNTS.map((amount, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => handleAmountSelect(amount)}
+                <div style={{ padding: isDesktop ? '40px' : '24px' }}>
+                <div style={{ backgroundColor: BG_COLOR_LIGHT, padding: '12px', borderRadius: '12px', marginBottom: '24px', border: `1px solid ${BORDER_COLOR}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                    <select
+                      value={formData.selectedCurrency}
+                      onChange={e => setFormData(prev => ({ ...prev, selectedCurrency: e.target.value }))}
                       style={{
-                        position: 'relative',
-                        padding: '16px 12px',
-                        borderRadius: '12px',
-                        border: Math.round(Number(formData.localAmount)) === Math.round(Number(amount)) && !uiState.isCustomAmount
-                          ? '2px solid #f59e0b'
-                          : '1px solid #e5e7eb',
-                        backgroundColor: Math.round(Number(formData.localAmount)) === Math.round(Number(amount)) && !uiState.isCustomAmount
-                          ? '#f59e0b'
-                          : 'white',
-                        color: Math.round(Number(formData.localAmount)) === Math.round(Number(amount)) && !uiState.isCustomAmount
-                          ? 'white'
-                          : '#374151',
-                        cursor: 'pointer',
-                        fontWeight: 'bold',
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        border: `1px solid ${BORDER_COLOR}`,
                         fontSize: '16px',
-                        transition: 'all 0.2s ease'
+                        fontWeight: 'bold',
+                        backgroundColor: 'white',
+                        color: TEXT_COLOR_DARK,
+                        cursor: 'pointer'
                       }}
                     >
-                      {index === 1 && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '-4px',
-                          left: '0',
-                          right: '0',
-                          display: 'flex',
-                          justifyContent: 'center'
-                        }}>
-                          <span style={{
-                            backgroundColor: '#10b981',
-                            fontSize: '10px',
-                            fontWeight: 'bold',
-                            padding: '2px 8px',
-                            borderRadius: '20px',
-                            color: 'white',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}>
-                            <Star style={{ height: '10px', width: '10px' }} />
-                            Popular
-                          </span>
-                        </div>
-                      )}
-                      <div style={{ marginBottom: '4px' }}>
-                        ₹{Math.round(Number(amount)).toLocaleString()}
-                      </div>
-                      {formData.frequency === 'Monthly' && (
-                        <div style={{ fontSize: '10px', opacity: '0.8' }}>
-                          per month
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-                
-                {/* Custom Amount Input */}
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="number"
-                    value={formData.customAmount}
-                    onChange={(e) => handleCustomAmount(e.target.value)}
-                    placeholder={`Enter custom amount ${formData.frequency === 'Monthly' ? '(per month)' : ''}`}
-                    min="1"
-                    step="1"
-                    style={{
-                      width: '100%',
-                      paddingLeft: '48px',
-                      paddingRight: '60px',
-                      paddingTop: '12px',
-                      paddingBottom: '12px',
-                      borderRadius: '12px',
-                      border: uiState.isCustomAmount 
-                        ? '2px solid #f59e0b' 
-                        : '2px solid #e5e7eb',
-                      backgroundColor: uiState.isCustomAmount ? '#fef3c7' : 'white',
-                      fontSize: '16px',
-                      outline: 'none',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                  <div style={{
-                    position: 'absolute',
-                    left: '16px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: '#6b7280',
-                    fontWeight: 'bold',
-                    pointerEvents: 'none'
-                  }}>
-                    ₹
-                  </div>
-                  <div style={{
-                    position: 'absolute',
-                    right: '16px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: '#9ca3af',
-                    fontSize: '14px',
-                    pointerEvents: 'none'
-                  }}>
-                    INR
+                      <option value="INR">INR (₹)</option>
+                      <option value="USD">USD ($)</option>
+                    </select>
+                    <span style={{ fontSize: '14px', color: TEXT_COLOR_LIGHT }}>
+                      {formData.selectedCurrency === 'INR'
+                        ? 'Secure payment via Razorpay'
+                        : 'Secure payment via Stripe'}
+                    </span>
                   </div>
                 </div>
-              </div>
 
-              {/* Next Button */}
-              <button
-                type="button"
-                onClick={handleNext}
-                disabled={!formData.amount || formData.amount <= 0}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  // padding: '16px 24px',
-                  // borderRadius: '12px',
-                  height : '56px',
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  border: 'none',
-                  cursor: formData.amount && formData.amount > 0 ? 'pointer' : 'not-allowed',
-                  backgroundColor: formData.amount && formData.amount > 0
-                    ? (formData.frequency === 'Monthly' ? '#10b981' : '#f59e0b')
-                    : '#e5e7eb',
-                  color: formData.amount && formData.amount > 0
-                    ? 'white'
-                    : '#9ca3af',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <span style={{ display: 'flex', alignItems: 'center' }}>
-                  Continue to Details
-                  <ArrowRight style={{ height: '16px', width: '16px', marginLeft: '8px' }} />
-                </span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Personal Details */}
-        {currentStep === 2 && (
-          <div>
-            {/* Header */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '24px 24px 0',
-              borderBottom: '1px solid #e5e7eb',
-              paddingBottom: '16px',
-              marginBottom: '24px'
-            }}>
-              <button
-                onClick={handleBack}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  color: '#3b82f6',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                <ArrowLeft style={{ height: '16px', width: '16px', marginRight: '8px' }} />
-                Back to Payment Gateway
-              </button>
-            </div>
-
-            <div style={{ padding: '0 24px 24px' }}>
-              {/* Amount Summary */}
-              <div style={{
-                background: 'linear-gradient(to right, #f59e0b, #f97316)',
-                color: 'white',
-                padding: '16px',
-                borderRadius: '16px',
-                marginBottom: '24px'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <div style={{
-                      width: '32px',
-                      height: '32px',
-                      backgroundColor: 'rgba(255,255,255,0.2)',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginRight: '12px'
-                    }}>
-                      {formData.frequency === 'Monthly' ? (
-                        <Repeat style={{ height: '16px', width: '16px' }} />
-                      ) : (
-                        <Heart style={{ height: '16px', width: '16px' }} />
-                      )}
-                    </div>
-                    <div>
-                      <p style={{
-                        fontWeight: 'bold',
-                        fontSize: '16px',
-                        marginBottom: '2px',
-                        margin: 0
-                      }}>
-                        ₹{Math.round(formData.localAmount).toLocaleString()} {formData.frequency === 'Monthly' && '/month'}
-                      </p>
-                      <p style={{
-                        fontSize: '12px',
-                        opacity: '0.8',
-                        margin: 0
-                      }}>
-                        {formData.frequency} Donation
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Personal Details */}
-              <div style={{ marginBottom: '24px' }}>
-                <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                  <h2 style={{
-                    fontSize: '20px',
-                    fontWeight: 'bold',
-                    color: '#374151',
-                    marginBottom: '8px'
-                  }}>
-                    Your Details
-                  </h2>
-                  <p style={{
-                    color: '#6b7280',
-                    fontSize: '14px'
-                  }}>
-                    We'll use this information for your donation receipt
-                  </p>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {/* Name */}
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: '#374151',
-                      marginBottom: '6px'
-                    }}>
-                      Full Name <span style={{ color: '#ef4444' }}>*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => handleFormFieldChange('name', e.target.value)}
-                      placeholder="Enter your full name"
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        borderRadius: '12px',
-                        border: '2px solid #e5e7eb',
-                        fontSize: '16px',
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                      }}
-                      required
-                    />
-                  </div>
                   
-                  {/* Phone Number */}
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: '#374151',
-                      marginBottom: '6px'
-                    }}>
-                      Mobile Number <span style={{ color: '#ef4444' }}>*</span>
-                    </label>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      {/* Country Code Dropdown */}
-                      <div className="country-code-dropdown-container" style={{ position: 'relative', width: '80px', flexShrink: '0' }}>
-                        <button
-                          type="button"
-                          onClick={toggleCountryCodeDropdown}
+                  <div style={{ marginBottom: '24px' }}>
+                    <h2 style={{ fontSize: '14px', fontWeight: '600', color: TEXT_COLOR_DARK, marginBottom: '12px', textAlign: 'center' }}>Select Donation Type</h2>
+                    <div style={{ display: 'flex', backgroundColor: '#f3f4f6', borderRadius: '12px', padding: '4px' }}>
+                      {['One-time', 'Monthly'].map(freq => (
+                        <button key={freq} type="button" onClick={() => handleFrequencyChange(freq)}
                           style={{
-                            width: '100%',
-                            height: '48px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '0 8px',
-                            borderRadius: '12px',
-                            border: '2px solid #e5e7eb',
-                            backgroundColor: 'white',
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                            fontWeight: '600'
-                          }}
-                        >
-                          {formData.countryCode}
+                            flex: '1', padding: '10px 16px', borderRadius: '10px',
+                            border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: '600',
+                            backgroundColor: formData.frequency === freq ? 'white' : 'transparent',
+                            color: formData.frequency === freq ? PRIMARY_COLOR : TEXT_COLOR_LIGHT,
+                            boxShadow: formData.frequency === freq ? '0 1px 3px 0 rgba(0,0,0,0.1)' : 'none',
+                            transition: 'all 0.2s ease-in-out'
+                          }}>
+                          {freq}
                         </button>
-                        
-                        {uiState.showCountryCodeDropdown && (
-                          <div style={{
-                            position: 'absolute',
-                            zIndex: '30',
-                            marginTop: '8px',
-                            width: '256px',
-                            backgroundColor: 'white',
-                            borderRadius: '12px',
-                            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-                            border: '1px solid #e5e7eb',
-                            maxHeight: '192px',
-                            overflowY: 'auto',
-                            left: '0'
-                          }}>
-                            <div style={{
-                              padding: '8px',
-                              borderBottom: '1px solid #e5e7eb'
-                            }}>
-                              <input
-                                type="text"
-                                value={uiState.countryCodeSearchQuery}
-                                onChange={(e) => setUiState(prev => ({ ...prev, countryCodeSearchQuery: e.target.value }))}
-                                placeholder="Search country..."
-                                style={{
-                                  width: '100%',
-                                  padding: '8px 12px',
-                                  borderRadius: '8px',
-                                  border: '1px solid #e5e7eb',
-                                  fontSize: '14px',
-                                  boxSizing: 'border-box'
-                                }}
-                              />
-                            </div>
-                            <div style={{ padding: '4px' }}>
-                              {filteredCountryCodes.map((countryCode) => (
-                                <button
-                                  key={countryCode.code + countryCode.country}
-                                  type="button"
-                                  onClick={() => selectCountryCode(countryCode)}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    width: '100%',
-                                    padding: '8px 12px',
-                                    textAlign: 'left',
-                                    fontSize: '14px',
-                                    border: 'none',
-                                    backgroundColor: 'transparent',
-                                    cursor: 'pointer',
-                                    borderRadius: '6px'
-                                  }}
-                                  onMouseOver={(e) => e.target.style.backgroundColor = '#f3f4f6'}
-                                  onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
-                                >
-                                  <span style={{ marginRight: '8px', fontSize: '16px' }}>{countryCode.flag}</span>
-                                  <span style={{ fontSize: '12px', color: '#6b7280', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{countryCode.country}</span>
-                                  <span style={{ marginLeft: 'auto', fontWeight: '600', color: '#374151', fontSize: '12px' }}>{countryCode.code}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Phone Input */}
-                      <div style={{ flex: '1', minWidth: '0' }}>
-                        <input
-                          type="tel"
-                          value={formData.phone}
-                          onChange={handlePhoneChange}
-                          placeholder="Enter your mobile number"
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div style={{ marginBottom: '24px' }}>
+                    <h2 style={{ fontSize: '14px', fontWeight: '600', color: TEXT_COLOR_DARK, marginBottom: '12px', textAlign: 'center' }}>Choose an Amount</h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
+                      {DEFAULT_DONATION_AMOUNTS.map((amount, index) => {
+                        const isSelected = Math.round(Number(formData.localAmount)) === amount && !uiState.isCustomAmount;
+                        return (
+                        <button key={index} type="button" onClick={() => handleAmountSelect(amount)}
                           style={{
-                            width: '100%',
-                            height: '48px',
-                            padding: '0 16px',
-                            borderRadius: '12px',
-                            border: hasTouchedPhone && phoneError
-                              ? '2px solid #ef4444'
-                              : '2px solid #e5e7eb',
-                            fontSize: '16px',
-                            outline: 'none',
-                            boxSizing: 'border-box'
-                          }}
-                          required
-                        />
-                      </div>
-                    </div>
-                    {hasTouchedPhone && phoneError && (
-                      <p style={{
-                        fontSize: '12px',
-                        color: '#ef4444',
-                        marginTop: '4px'
-                      }}>
-                        {phoneError}
-                      </p>
-                    )}
-                  </div>
-                  
-                  {/* Email */}
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: '#374151',
-                      marginBottom: '6px'
-                    }}>
-                      Email Address {formData.frequency === 'Monthly' ? <span style={{ color: '#ef4444' }}>*</span> : '(Optional)'}
-                    </label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={handleEmailChange}
-                      onBlur={handleEmailBlur}
-                      placeholder="Enter your email address"
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        borderRadius: '12px',
-                        border: hasEmailTouched && emailError
-                          ? '2px solid #ef4444'
-                          : '2px solid #e5e7eb',
-                        fontSize: '16px',
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                      }}
-                      required={formData.frequency === 'Monthly'}
-                    />
-                    {hasEmailTouched && emailError && (
-                      <p style={{
-                        fontSize: '12px',
-                        color: '#ef4444',
-                        marginTop: '4px'
-                      }}>
-                        {emailError}
-                      </p>
-                    )}
-                    {formData.frequency === 'Monthly' && (
-                      <p style={{
-                        fontSize: '12px',
-                        color: '#6b7280',
-                        marginTop: '4px'
-                      }}>
-                        Email required for monthly subscription management
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Address */}
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: '#374151',
-                      marginBottom: '6px'
-                    }}>
-                      Address <span style={{ color: '#ef4444' }}>*</span>
-                    </label>
-                    <textarea
-                      value={formData.address}
-                      onChange={(e) => handleFormFieldChange('address', e.target.value)}
-                      placeholder="Enter your street address"
-                      rows={2}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        borderRadius: '12px',
-                        border: '2px solid #e5e7eb',
-                        fontSize: '16px',
-                        outline: 'none',
-                        resize: 'none',
-                        boxSizing: 'border-box'
-                      }}
-                      required
-                    />
-                  </div>
-                  
-                  {/* City */}
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: '#374151',
-                      marginBottom: '6px'
-                    }}>
-                      City <span style={{ color: '#ef4444' }}>*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.city}
-                      onChange={(e) => handleFormFieldChange('city', e.target.value)}
-                      placeholder="Enter your city"
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        borderRadius: '12px',
-                        border: '2px solid #e5e7eb',
-                        fontSize: '16px',
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                      }}
-                      required
-                    />
-                  </div>
-                  
-                  {/* State */}
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: '#374151',
-                      marginBottom: '6px'
-                    }}>
-                      State <span style={{ color: '#ef4444' }}>*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.state}
-                      onChange={(e) => handleFormFieldChange('state', e.target.value)}
-                      placeholder="Enter your state"
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        borderRadius: '12px',
-                        border: '2px solid #e5e7eb',
-                        fontSize: '16px',
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                      }}
-                      required
-                    />
-                  </div>
-                  
-                  {/* Pincode */}
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: '#374151',
-                      marginBottom: '6px'
-                    }}>
-                      Pin Code <span style={{ color: '#ef4444' }}>*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.pincode}
-                      onChange={handlePincodeChange}
-                      placeholder="eg : 110001"
-                      maxLength={6}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        borderRadius: '12px',
-                        border: '2px solid #e5e7eb',
-                        fontSize: '16px',
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                      }}
-                      required
-                    />
-                  </div>
-
-                  {/* PAN Number */}
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: '#374151',
-                      marginBottom: '6px'
-                    }}>
-                      PAN Number (If you want to avail 80G tax exemption, please provide PAN )
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.panNumber}
-                      placeholder="ENTER PAN NUMBER (E.G., ABCTY1234D)"
-                      onChange={handlePanNumberChange}
-                      maxLength={10}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        borderRadius: '12px',
-                        border: '2px solid #e5e7eb',
-                        fontSize: '16px',
-                        outline: 'none',
-                        textTransform: 'uppercase',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-
-                  {/* Anonymous Donation Checkbox */}
-                  <div style={{ marginTop: '16px' }}>
-                    <label style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      cursor: 'pointer'
-                    }}>
-                      <div style={{ position: 'relative' }}>
-                        <input 
-                          type="checkbox" 
-                          checked={formData.isAnonymous}
-                          onChange={(e) => handleAnonymousToggle(e.target.checked)}
-                          style={{ display: 'none' }}
-                        />
-                        <div style={{
-                          width: '16px',
-                          height: '16px',
-                          borderRadius: '4px',
-                          border: '2px solid ' + (formData.isAnonymous ? '#3b82f6' : '#d1d5db'),
-                          backgroundColor: formData.isAnonymous ? '#3b82f6' : 'white',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>
-                          {formData.isAnonymous && (
-                            <CheckCircle style={{ height: '16px', width: '16px', color: 'white' }} />
+                            position: 'relative', padding: '20px 12px', borderRadius: '12px',
+                            border: `2px solid ${isSelected ? PRIMARY_COLOR : BORDER_COLOR}`,
+                            backgroundColor: isSelected ? '#eef2ff' : 'white',
+                            color: isSelected ? PRIMARY_COLOR : TEXT_COLOR_DARK,
+                            cursor: 'pointer', fontWeight: 'bold', fontSize: '18px',
+                            transition: 'all 0.2s ease-in-out'
+                          }}>
+                          {index === 1 && (
+                            <div style={{ position: 'absolute', top: '-10px', left: '0', right: '0', display: 'flex', justifyContent: 'center' }}>
+                              <span style={{ backgroundColor: '#10b981', fontSize: '10px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '20px', color: 'white' }}>Popular</span>
+                            </div>
                           )}
-                        </div>
-                      </div>
-                      <span style={{
-                        marginLeft: '12px',
-                        fontSize: '14px',
-                        color: '#374151'
-                      }}>
-                        Make my donation anonymous ( your name won't be displayed publicly )
-                      </span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              {/* Donate Button */}
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={!areStep2FieldsFilled() || uiState.isSubmitting}
-                style={{
-                  width: '80%', // smaller width
-                  maxWidth: '280px', // limit max width
-                  minWidth: '160px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  height: '70px',
-                  justifyContent: 'center',
-                  padding: '10px 16px', // smaller padding
-                  borderRadius: '10px', // slightly smaller radius
-                  fontSize: '15px', // smaller font
-                  fontWeight: 'bold',
-                  border: 'none',
-                  cursor: areStep2FieldsFilled() && !uiState.isSubmitting ? 'pointer' : 'not-allowed',
-                  backgroundColor: areStep2FieldsFilled() && !uiState.isSubmitting
-                    ? (formData.frequency === 'Monthly' ? '#10b981' : '#f59e0b')
-                    : '#e5e7eb',
-                  color: areStep2FieldsFilled() && !uiState.isSubmitting
-                    ? 'white'
-                    : '#9ca3af',
-                  margin: '12px auto 16px auto', // center and reduce margin
-                  transition: 'all 0.2s ease'
-                }}
-              >
-             
-                {uiState.isSubmitting ? (
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <Loader2 style={{ animation: 'spin 1s linear infinite', height: '20px', width: '20px', marginRight: '12px' }} />
-                    Processing...
-                  </div>
-                ) : (
-                  <span style={{ display: 'flex', alignItems: 'center' }}>
-                    {formData.frequency === 'Monthly' ? (
-                      <Repeat style={{ height: '16px', width: '16px', marginRight: '8px' }} />
-                    ) : (
-                      <Heart style={{ height: '16px', width: '16px', marginRight: '8px' }} />
-                    )}
-                    {formData.frequency === 'Monthly' ? 'Start Monthly Donation' : 'Donate'} ₹{Math.round(formData.localAmount).toLocaleString()}
-                    {formData.frequency === 'Monthly' && <span style={{ fontSize: '14px', marginLeft: '4px', opacity: '0.8' }}>/month</span>}
-                  </span>
-                )}
-              </button>
-
-              {/* Security Notice */}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                marginBottom: '16px'
-              }}>
-                <div style={{
-                  backgroundColor: '#f3f4f6',
-                  borderRadius: '12px',
-                  padding: '8px 16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  fontSize: '14px',
-                  color: '#374151'
-                }}>
-                  <Lock style={{ height: '16px', width: '16px', marginRight: '8px', color: '#10b981' }} />
-                  <span style={{ marginRight: '8px' }}>Secure payment powered by</span>
-                  <span style={{ backgroundColor: '#6366f1', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>Razorpay</span>
-                </div>
-              </div>
-
-              {/* Trust Badges */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '12px'
-              }}>
-                {TRUST_BADGES.map((badge, index) => (
-                  <div key={index} style={{
-                    backgroundColor: 'white',
-                    borderRadius: '12px',
-                    padding: '12px',
-                    textAlign: 'center',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                    border: '1px solid #f3f4f6'
-                  }}>
-                    <div style={{
-                      width: '32px',
-                      height: '32px',
-                      backgroundColor: '#fef3c7',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto 8px'
-                    }}>
-                      <badge.icon style={{ height: '16px', width: '16px', color: '#f59e0b' }} />
+                          {formData.selectedCurrency === 'USD' ? '$' : '₹'}{amount.toLocaleString()}
+                        </button>
+                      )})}
                     </div>
-                    <h4 style={{
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      color: '#374151',
-                      marginBottom: '2px'
-                    }}>
-                      {badge.title}
-                    </h4>
-                    <p style={{
-                      fontSize: '10px',
-                      color: '#6b7280'
-                    }}>
-                      {badge.description}
-                    </p>
+                    
+                    <div style={{ position: 'relative' }}>
+                      <span style={{
+                        position: 'absolute',
+                        left: '16px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: TEXT_COLOR_LIGHT,
+                        fontWeight: 'bold',
+                        pointerEvents: 'none'
+                      }}>
+                        {formData.selectedCurrency === 'USD' ? '$' : '₹'}
+                      </span>
+                      <input
+                        type="number"
+                        value={formData.customAmount}
+                        onChange={(e) => handleCustomAmount(e.target.value)}
+                        placeholder={`Or enter a custom amount (${formData.selectedCurrency === 'USD' ? '$' : '₹'})`}
+                        min="1"
+                        step="1"
+                        style={{
+                          width: '100%',
+                          padding: '14px 48px',
+                          borderRadius: '12px',
+                          border: `2px solid ${uiState.isCustomAmount ? PRIMARY_COLOR : BORDER_COLOR}`,
+                          backgroundColor: uiState.isCustomAmount ? '#eef2ff' : 'white',
+                          fontSize: '16px',
+                          outline: 'none',
+                          boxSizing: 'border-box',
+                          textAlign: 'center'
+                        }}
+                      />
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* Message Display */}
-        {message && (
-          <div style={{
-            margin: '16px 24px',
-            padding: '12px 16px',
-            borderRadius: '12px',
-            textAlign: 'center',
-            fontSize: '14px',
-            fontWeight: '500',
-            ...(message.includes('successful') || message.includes('Thank you') || message.includes('activated')
-              ? { backgroundColor: '#d1fae5', color: '#065f46', border: '1px solid #a7f3d0' }
-              : message.includes('Error') || message.includes('cancelled') 
-              ? { backgroundColor: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5' }
-              : { backgroundColor: '#dbeafe', color: '#1e40af', border: '1px solid #93c5fd' })
-          }}>
-            {message}
-          </div>
-        )}
+                  <button type="button" onClick={handleNext} disabled={!formData.amount || formData.amount <= 0}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      padding: '16px 24px', borderRadius: '12px', fontSize: '16px', fontWeight: 'bold', border: 'none',
+                      cursor: formData.amount > 0 ? 'pointer' : 'not-allowed',
+                      backgroundColor: formData.amount > 0 ? PRIMARY_COLOR : '#e5e7eb',
+                      color: formData.amount > 0 ? 'white' : '#9ca3af',
+                      transition: 'all 0.2s ease-in-out'
+                    }}>
+                    Continue <ArrowRight style={{ height: '16px', width: '16px', marginLeft: '8px' }} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 2 && (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', padding: '16px 24px', borderBottom: `1px solid ${BORDER_COLOR}` }}>
+                  <button onClick={handleBack} style={{ display: 'flex', alignItems: 'center', color: PRIMARY_COLOR, background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}>
+                    <ArrowLeft style={{ height: '16px', width: '16px', marginRight: '4px' }} /> Back
+                  </button>
+                </div>
+                <div style={{ padding: isDesktop ? '40px' : '24px' }}>
+                  <div style={{ backgroundColor: BG_COLOR_LIGHT, padding: '16px', borderRadius: '12px', marginBottom: '24px', border: `1px solid ${BORDER_COLOR}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <p style={{ fontSize: '14px', color: TEXT_COLOR_LIGHT, margin: 0 }}>You are donating</p>
+                      <p style={{ fontWeight: 'bold', fontSize: '20px', color: TEXT_COLOR_DARK, margin: 0 }}>
+                        ₹{formData.localAmount.toLocaleString()} <span style={{fontSize: '14px', fontWeight:'500'}}>{formData.frequency === 'Monthly' && '/month'}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: '24px' }}>
+                    <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: TEXT_COLOR_DARK, marginBottom: '16px', textAlign: 'center' }}>Your Details</h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: TEXT_COLOR_DARK, marginBottom: '6px' }}>Full Name <span style={{ color: '#ef4444' }}>*</span></label>
+                        <input type="text" value={formData.name} onChange={(e) => handleFormFieldChange('name', e.target.value)} placeholder="Enter your full name" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: `1px solid ${BORDER_COLOR}`, fontSize: '16px', outline: 'none', boxSizing: 'border-box' }} required />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: TEXT_COLOR_DARK, marginBottom: '6px' }}>Mobile Number <span style={{ color: '#ef4444' }}>*</span></label>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <div className="country-code-dropdown-container" style={{ position: 'relative', width: '80px', flexShrink: '0' }}>
+                            <button type="button" onClick={toggleCountryCodeDropdown} style={{ width: '100%', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 8px', borderRadius: '8px', border: `1px solid ${BORDER_COLOR}`, backgroundColor: 'white', cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}>
+                              {formData.countryCode}
+                            </button>
+                            {uiState.showCountryCodeDropdown && (
+                              <div style={{ position: 'absolute', zIndex: '30', marginTop: '4px', width: '256px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', border: `1px solid ${BORDER_COLOR}`, maxHeight: '192px', overflowY: 'auto', left: '0' }}>
+                                <div style={{ padding: '8px', borderBottom: `1px solid ${BORDER_COLOR}` }}>
+                                  <input type="text" value={uiState.countryCodeSearchQuery} onChange={(e) => setUiState(prev => ({ ...prev, countryCodeSearchQuery: e.target.value }))} placeholder="Search..." style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: `1px solid ${BORDER_COLOR}`, fontSize: '14px', boxSizing: 'border-box' }} />
+                                </div>
+                                <div style={{ padding: '4px' }}>
+                                  {filteredCountryCodes.map((cc) => (
+                                    <button key={cc.code + cc.country} type="button" onClick={() => selectCountryCode(cc)} style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '8px 12px', textAlign: 'left', fontSize: '14px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', borderRadius: '6px' }}>
+                                      <span style={{ marginRight: '8px' }}>{cc.flag}</span>
+                                      <span style={{ fontSize: '12px', color: TEXT_COLOR_LIGHT, flex: '1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cc.country}</span>
+                                      <span style={{ marginLeft: 'auto', fontWeight: '600', color: TEXT_COLOR_DARK, fontSize: '12px', paddingLeft:'8px' }}>{cc.code}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <div style={{ flex: '1', minWidth: '0' }}>
+                            <input type="tel" value={formData.phone} onChange={handlePhoneChange} placeholder="Enter mobile number" style={{ width: '100%', height: '48px', padding: '0 16px', borderRadius: '8px', border: `1px solid ${hasTouchedPhone && phoneError ? '#ef4444' : BORDER_COLOR}`, fontSize: '16px', outline: 'none', boxSizing: 'border-box' }} required />
+                          </div>
+                        </div>
+                        {hasTouchedPhone && phoneError && <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px', margin: 0 }}>{phoneError}</p>}
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: TEXT_COLOR_DARK, marginBottom: '6px' }}>Email Address {formData.frequency === 'Monthly' ? <span style={{ color: '#ef4444' }}>*</span> : '(Optional)'}</label>
+                        <input type="email" value={formData.email} onChange={handleEmailChange} onBlur={handleEmailBlur} placeholder="Enter your email" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: `1px solid ${hasEmailTouched && emailError ? '#ef4444' : BORDER_COLOR}`, fontSize: '16px', outline: 'none', boxSizing: 'border-box' }} required={formData.frequency === 'Monthly'} />
+                        {hasEmailTouched && emailError && <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px', margin: 0 }}>{emailError}</p>}
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: TEXT_COLOR_DARK, marginBottom: '6px' }}>Address <span style={{ color: '#ef4444' }}>*</span></label>
+                        <textarea value={formData.address} onChange={(e) => handleFormFieldChange('address', e.target.value)} placeholder="Enter street address" rows={2} style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: `1px solid ${BORDER_COLOR}`, fontSize: '16px', outline: 'none', resize: 'none', boxSizing: 'border-box' }} required />
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <input type="text" value={formData.city} onChange={(e) => handleFormFieldChange('city', e.target.value)} placeholder="City *" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: `1px solid ${BORDER_COLOR}`, fontSize: '16px', outline: 'none', boxSizing: 'border-box' }} required />
+                        <input type="text" value={formData.state} onChange={(e) => handleFormFieldChange('state', e.target.value)} placeholder="State *" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: `1px solid ${BORDER_COLOR}`, fontSize: '16px', outline: 'none', boxSizing: 'border-box' }} required />
+                      </div>
+                      <input type="text" value={formData.pincode} onChange={handlePincodeChange} placeholder="Pin Code *" maxLength={6} style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: `1px solid ${BORDER_COLOR}`, fontSize: '16px', outline: 'none', boxSizing: 'border-box' }} required />
+                      <input type="text" value={formData.panNumber} placeholder="PAN Number (for 80G)" onChange={handlePanNumberChange} maxLength={10} style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: `1px solid ${BORDER_COLOR}`, fontSize: '16px', outline: 'none', textTransform: 'uppercase', boxSizing: 'border-box' }} />
+                      <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginTop: '8px' }}>
+                        <input type="checkbox" checked={formData.isAnonymous} onChange={(e) => handleAnonymousToggle(e.target.checked)} style={{ width: '16px', height: '16px', accentColor: PRIMARY_COLOR }} />
+                        <span style={{ marginLeft: '12px', fontSize: '14px', color: TEXT_COLOR_DARK }}>Make my donation anonymous</span>
+                      </label>
+                    </div>
+                  </div>
+                  <button type="button" onClick={handleSubmit} disabled={!areStep2FieldsFilled() || uiState.isSubmitting}
+                    style={{
+                      width: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 24px', borderRadius: '12px', fontSize: '16px', fontWeight: 'bold', border: 'none',
+                      cursor: areStep2FieldsFilled() && !uiState.isSubmitting ? 'pointer' : 'not-allowed',
+                      backgroundColor: areStep2FieldsFilled() && !uiState.isSubmitting ? PRIMARY_COLOR : '#e5e7eb',
+                      color: areStep2FieldsFilled() && !uiState.isSubmitting ? 'white' : '#9ca3af',
+                      transition: 'all 0.2s ease-in-out'
+                    }}>
+                    {uiState.isSubmitting ? (
+                      <><Loader2 style={{ animation: 'spin 1s linear infinite', height: '20px', width: '20px', marginRight: '12px' }} /> Processing...</>
+                    ) : (
+                      <>{formData.frequency === 'Monthly' ? 'Start Subscription' : 'Donate Now'}</>
+                    )}
+                  </button>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px', alignItems: 'center', fontSize: '12px', color: TEXT_COLOR_LIGHT }}>
+                    {/* <Lock style={{ height: '12px', width: '12px', marginRight: '6px' }} /> Secure payment via Razorpay */}
+                  </div>
+                </div>
+              </div>
+            )}
+            {message && (
+              <div style={{
+                margin: '0 24px 24px', padding: '12px 16px', borderRadius: '8px', textAlign: 'center', fontSize: '14px', fontWeight: '500',
+                ...(message.includes('successful') || message.includes('Thank you') || message.includes('activated')
+                  ? { backgroundColor: '#d1fae5', color: '#065f46', border: '1px solid #a7f3d0' }
+                  : message.includes('Error') || message.includes('cancelled') 
+                  ? { backgroundColor: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5' }
+                  : { backgroundColor: '#dbeafe', color: '#1e40af', border: '1px solid #93c5fd' })
+              }}>
+                {message}
+              </div>
+            )}
+        </div>
       </div>
     </div>
   );
 }
     
 export default App;
+
