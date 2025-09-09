@@ -520,7 +520,11 @@ function App() {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <p style={{ fontSize: '14px', color: TEXT_COLOR_LIGHT, margin: 0 }}>You are donating</p>
                       <p style={{ fontWeight: 'bold', fontSize: '20px', color: TEXT_COLOR_DARK, margin: 0 }}>
-                        ₹{formData.localAmount.toLocaleString()} <span style={{fontSize: '14px', fontWeight:'500'}}>{formData.frequency === 'Monthly' && '/month'}</span>
+                        {formData.selectedCurrency === 'USD' ? '$' : '₹'}
+                        {formData.localAmount.toLocaleString()}
+                        <span style={{fontSize: '14px', fontWeight:'500'}}>
+                          {formData.frequency === 'Monthly' && '/month'}
+                        </span>
                       </p>
                     </div>
                   </div>
