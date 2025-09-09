@@ -1517,7 +1517,6 @@ function App() {
               </div>
 
               {/* Donate Button */}
-              // ...existing code...
               <button
                 type="button"
                 onClick={handleSubmit}
@@ -1545,7 +1544,7 @@ function App() {
                   transition: 'all 0.2s ease'
                 }}
               >
-              // ...existing code...
+             
                 {uiState.isSubmitting ? (
                   <div style={{ display: 'flex', alignItems: 'center' }}>
                     <Loader2 style={{ animation: 'spin 1s linear infinite', height: '20px', width: '20px', marginRight: '12px' }} />
