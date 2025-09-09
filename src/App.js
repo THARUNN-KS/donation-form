@@ -989,8 +989,9 @@ function App() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  padding: '16px 24px',
-                  borderRadius: '12px',
+                  // padding: '16px 24px',
+                  // borderRadius: '12px',
+                  height : '56px',
                   fontSize: '18px',
                   fontWeight: 'bold',
                   border: 'none',
@@ -1006,7 +1007,7 @@ function App() {
               >
                 <span style={{ display: 'flex', alignItems: 'center' }}>
                   Continue to Details
-                  <ArrowRight style={{ height: '20px', width: '20px', marginLeft: '12px' }} />
+                  <ArrowRight style={{ height: '16px', width: '16px', marginLeft: '8px' }} />
                 </span>
               </button>
             </div>
@@ -1527,6 +1528,7 @@ function App() {
                   minWidth: '160px',
                   display: 'flex',
                   alignItems: 'center',
+                  height: '70px',
                   justifyContent: 'center',
                   padding: '10px 16px', // smaller padding
                   borderRadius: '10px', // slightly smaller radius
