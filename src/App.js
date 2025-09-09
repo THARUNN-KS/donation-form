@@ -293,23 +293,57 @@ function App() {
     if (uiState.isSubmitting || !validateForm() || !areStep2FieldsFilled()) return;
     setUiState(prev => ({ ...prev, isSubmitting: true }));
     setMessage('Processing your donation...');
+
     try {
+      if (formData.selectedCurrency === 'USD') {
+        // Stripe payment flow
+        const response = await fetch(`${API_BASE_URL}/api/create-stripe-payment`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: formData.amount,
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            currency: 'USD',
+            frequency: formData.frequency
+          })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || data.error || 'Failed to process payment');
+        if (data.id) {
+          // Open Stripe Checkout
+          window.location.href = `https://checkout.stripe.com/c/${data.id}`;
+        } else {
+          throw new Error('Stripe session not created');
+        }
+        setUiState(prev => ({ ...prev, isSubmitting: false }));
+        return;
+      }
+
+      // Razorpay payment flow (INR)
       const response = await fetch(`${API_BASE_URL}/api/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: formData.amount, name: formData.name, email: formData.email,
-          phone: formData.phone, currency: 'INR', frequency: formData.frequency
+          amount: formData.amount,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          currency: 'INR',
+          frequency: formData.frequency
         })
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || data.error || 'Failed to process payment');
       const commonOptions = {
-        key: 'rzp_test_4nEyceM4GUQmPk', amount: data.amount, currency: data.currency, name: 'Our Cause',
+        key: 'rzp_test_4nEyceM4GUQmPk',
+        amount: data.amount,
+        currency: data.currency,
+        name: 'Our Cause',
         prefill: { name: formData.name, email: formData.email, contact: formData.phone },
         theme: { color: '#4f46e5' },
         handler: (response) => {
-          console.log('Payment successful:', response);
           setMessage(formData.frequency === 'Monthly' ? 'Monthly subscription activated! Thank you.' : 'Thank you for your generous donation!');
           setUiState(prev => ({ ...prev, isSubmitting: false }));
           setTimeout(() => {
@@ -335,7 +369,6 @@ function App() {
       }
       rzp.open();
     } catch (error) {
-      console.error('Payment error:', error);
       setMessage(`Error: ${error.message}`);
       setUiState(prev => ({ ...prev, isSubmitting: false }));
     }
